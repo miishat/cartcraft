@@ -4,9 +4,11 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { newId } from '../../app/ids';
 import { createList } from '../../app/lists';
+import { ErrorNote } from '../components/ErrorNote';
 import { ServingsStepper } from '../components/ServingsStepper';
 import { useDb } from '../db';
 import { useSettings } from '../hooks';
+import { useAsyncAction } from '../useAsyncAction';
 
 interface Props {
   makeId?: () => string;
@@ -21,8 +23,15 @@ export function RecipesScreen({ makeId = newId, now = Date.now }: Props) {
   const recipes = useLiveQuery(() => db.recipes.orderBy('title').toArray(), [db]);
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<Map<string, number>>(new Map());
-  const [building, setBuilding] = useState(false);
-  const [buildError, setBuildError] = useState<string | null>(null);
+  const build = useAsyncAction(async () => {
+    const listId = await createList(
+      db,
+      [...selected].map(([recipeId, targetServings]) => ({ recipeId, targetServings })),
+      now(),
+      makeId,
+    );
+    navigate(`/lists/${listId}`);
+  }, 'Could not build the list. Try again.');
 
   if (!recipes) return null;
 
@@ -39,24 +48,6 @@ export function RecipesScreen({ makeId = newId, now = Date.now }: Props) {
 
   const setServings = (id: string, servings: number) => {
     setSelected((prev) => new Map(prev).set(id, servings));
-  };
-
-  const build = async () => {
-    setBuilding(true);
-    setBuildError(null);
-    try {
-      const listId = await createList(
-        db,
-        [...selected].map(([recipeId, targetServings]) => ({ recipeId, targetServings })),
-        now(),
-        makeId,
-      );
-      navigate(`/lists/${listId}`);
-    } catch {
-      setBuildError('Could not build the list. Try again.');
-    } finally {
-      setBuilding(false);
-    }
   };
 
   return (
@@ -126,11 +117,11 @@ export function RecipesScreen({ makeId = newId, now = Date.now }: Props) {
 
       {selected.size > 0 && (
         <div className="fixed inset-x-0 bottom-20 flex flex-col items-center gap-2 px-4 md:bottom-6">
-          {buildError && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 shadow">{buildError}</p>}
+          <ErrorNote message={build.error} className="rounded-lg bg-red-50 px-3 py-2 shadow" />
           <button
             type="button"
-            onClick={() => void build()}
-            disabled={building}
+            onClick={() => void build.run()}
+            disabled={build.pending}
             className="inline-flex items-center gap-2 rounded-full bg-emerald-800 px-6 py-3 font-medium text-white shadow-lg disabled:opacity-50"
           >
             <ShoppingCart size={18} /> Build list ({selected.size})

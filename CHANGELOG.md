@@ -4,6 +4,9 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Fixed
+- Saving, deleting and building lists now show an inline message when something goes wrong instead of failing silently.
+
 ## [0.1.0] - 2026-10-01
 
 ### Added

@@ -3,9 +3,11 @@ import { Link, useNavigate, useParams } from 'react-router';
 import type { IngredientLine } from '../../domain';
 import { newId } from '../../app/ids';
 import { deleteRecipe, draftLinesFromText, requestPersistence, saveRecipe } from '../../app/recipes';
+import { ErrorNote } from '../components/ErrorNote';
 import { ReviewTable } from '../components/ReviewTable';
 import { useDb } from '../db';
 import { useSettings } from '../hooks';
+import { useAsyncAction } from '../useAsyncAction';
 
 interface Props {
   makeId?: () => string;
@@ -27,7 +29,6 @@ export function RecipeEditorScreen({ makeId = newId, now = Date.now }: Props) {
   const [lines, setLines] = useState<IngredientLine[] | null>(null);
   const [sourceUrl, setSourceUrl] = useState<string | undefined>();
   const [yieldText, setYieldText] = useState<string | undefined>();
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (id === undefined) return;
@@ -54,37 +55,38 @@ export function RecipeEditorScreen({ makeId = newId, now = Date.now }: Props) {
   const baseServings = Number(servings);
   const canSave = lines !== null && title.trim() !== '' && Number.isFinite(baseServings) && baseServings > 0;
 
-  const onSave = async (e: FormEvent) => {
+  const save = useAsyncAction(async (ingredients: IngredientLine[]) => {
+    const isFirst = (await db.recipes.count()) === 0;
+    await saveRecipe(
+      db,
+      {
+        ...(id ? { id } : {}),
+        title,
+        rawText,
+        baseServings,
+        ingredients: ingredients.filter((l) => l.raw.trim() !== ''),
+        ...(sourceUrl ? { sourceUrl } : {}),
+        ...(yieldText ? { yieldText } : {}),
+      },
+      now(),
+      makeId,
+    );
+    if (isFirst) void requestPersistence(db);
+    navigate('/');
+  }, 'Could not save the recipe. Try again.');
+
+  const remove = useAsyncAction(async (recipeId: string) => {
+    await deleteRecipe(db, recipeId);
+    navigate('/');
+  }, 'Could not delete the recipe. Try again.');
+
+  const onSave = (e: FormEvent) => {
     e.preventDefault();
-    if (!canSave || !lines) return;
-    setError(null);
-    try {
-      const isFirst = (await db.recipes.count()) === 0;
-      await saveRecipe(
-        db,
-        {
-          ...(id ? { id } : {}),
-          title,
-          rawText,
-          baseServings,
-          ingredients: lines.filter((l) => l.raw.trim() !== ''),
-          ...(sourceUrl ? { sourceUrl } : {}),
-          ...(yieldText ? { yieldText } : {}),
-        },
-        now(),
-        makeId,
-      );
-      if (isFirst) void requestPersistence(db);
-      navigate('/');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save the recipe');
-    }
+    if (canSave && lines) void save.run(lines);
   };
 
-  const onDelete = async () => {
-    if (!id || !window.confirm(`Delete "${title}"?`)) return;
-    await deleteRecipe(db, id);
-    navigate('/');
+  const onDelete = () => {
+    if (id && window.confirm(`Delete "${title}"?`)) void remove.run(id);
   };
 
   if (!loaded) return null;
@@ -145,14 +147,14 @@ export function RecipeEditorScreen({ makeId = newId, now = Date.now }: Props) {
             <ReviewTable lines={lines} onChange={setLines} unitSystem={settings.unitSystem} makeId={makeId} />
           </section>
 
-          {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+          <ErrorNote message={save.error ?? remove.error} />
 
           <div className="flex items-center gap-3">
-            <button type="submit" disabled={!canSave} className="rounded-lg bg-emerald-800 px-5 py-2.5 font-medium text-white disabled:opacity-40">
+            <button type="submit" disabled={!canSave || save.pending} className="rounded-lg bg-emerald-800 px-5 py-2.5 font-medium text-white disabled:opacity-40">
               Save recipe
             </button>
             {id && (
-              <button type="button" onClick={() => void onDelete()} className="text-sm font-medium text-red-700">
+              <button type="button" onClick={onDelete} disabled={remove.pending} className="text-sm font-medium text-red-700">
                 Delete
               </button>
             )}
