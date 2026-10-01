@@ -5,6 +5,7 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 ## [Unreleased]
 
 ### Fixed
+- Ingredient parsing: "4 oz. can tomato paste" is read as one 4 oz can, "or to taste" and leading "x2" are understood, and bare units ("2 cups"), alternatives with their own amount and zero amounts are flagged for review. Zero amounts no longer display as "pinch".
 - Saving, deleting and building lists now show an inline message when something goes wrong instead of failing silently.
 
 ## [0.1.0] - 2026-10-01

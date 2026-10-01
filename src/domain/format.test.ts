@@ -69,3 +69,11 @@ describe('formatAmounts', () => {
     expect(formatAmounts([], 'us')).toBe('');
   });
 });
+
+describe('zero amounts', () => {
+  it('render as nothing instead of "pinch"', () => {
+    expect(formatAmount({ quantity: { min: 0 }, unit: 'cup' }, 'us')).toBe('');
+    expect(formatAmount({ quantity: { min: 0 }, unit: 'clove' }, 'us')).toBe('');
+    expect(formatAmounts([{ quantity: { min: 0 }, unit: 'cup' }, { quantity: { min: 2 }, unit: 'clove' }], 'us')).toBe('2 cloves');
+  });
+});

@@ -8,9 +8,12 @@ const MAX_LINE_LENGTH = 512;
 const NON_SCALABLE_UNITS = new Set<UnitId>(['pinch', 'dash']);
 
 const APPROXIMATE = /^(?:about|approx\.?|approximately|around|roughly|~)\s*/i;
-const TO_TASTE = /,?\s*\b(?:to taste|as needed|as required)\b\.?/gi;
+const TO_TASTE = /,?\s*\b(?:or\s+)?(?:to taste|as needed|as required)\b\.?/gi;
 const JUICE_OR_ZEST = new RegExp(String.raw`^(juice|zest) of (${NUM}) (.+)$`, 'i');
 const TRAILING_TIMES = /\s+x\s?(\d+)$/i;
+const LEADING_TIMES = /^x\s?(\d+)\s+/i;
+/** "4 oz. can tomato paste": the amount is the package size of one container. */
+const SIZE_THEN_CONTAINER = /^((?:fl\.?\s*)?[a-z]+)\.?\s+(\S+)\s+(.+)$/i;
 const ARTICLE = /^an?\s+/i;
 const FLUID_OUNCE = /^(?:fl\.?\s*oz\.?|fluid\s+ounces?)(?=\s)/i;
 const UNIT_WORD = /^[a-zA-Z]+\.?/;
@@ -74,9 +77,13 @@ export function parseIngredientLine(raw: string, id: string): IngredientLine {
       const article = ARTICLE.exec(text);
       const afterArticle = article ? text.slice(article[0].length) : '';
       const articleUnit = UNIT_WORD.exec(afterArticle)?.[0];
+      const leadingTimes = LEADING_TIMES.exec(text);
       if (article && articleUnit && lookupUnit(articleUnit)) {
         quantity = { min: 1 };
         text = afterArticle;
+      } else if (leadingTimes?.[1] !== undefined) {
+        quantity = { min: Number(leadingTimes[1]) };
+        text = text.slice(leadingTimes[0].length);
       } else {
         const trailing = TRAILING_TIMES.exec(text);
         if (trailing?.[1] !== undefined) {
@@ -103,6 +110,20 @@ export function parseIngredientLine(raw: string, id: string): IngredientLine {
         packageSize = { quantity: sizeQty, unit: sizeUnit.id };
         unit = container.id;
         text = pkg[4] ?? '';
+      }
+    }
+    if (!unit && quantity.max === undefined) {
+      const sized = SIZE_THEN_CONTAINER.exec(text);
+      const sizeUnit = lookupUnit(sized?.[1] ?? '');
+      const container = lookupUnit(sized?.[2] ?? '');
+      if (
+        sized && sizeUnit && container && isPackagedUnit(container.id) &&
+        (sizeUnit.dimension === 'mass' || sizeUnit.dimension === 'volume')
+      ) {
+        packageSize = { quantity: quantity.min, unit: sizeUnit.id };
+        quantity = { min: 1 };
+        unit = container.id;
+        text = sized[3] ?? '';
       }
     }
   }
@@ -167,7 +188,15 @@ export function parseIngredientLine(raw: string, id: string): IngredientLine {
   if (toTaste) notes.push('to taste');
 
   const needsReview =
-    unclearRange || !item || /\s+and\s+/i.test(item) || notes.some((n) => /^plus\b/i.test(n));
+    unclearRange ||
+    !item ||
+    /\s+and\s+/i.test(item) ||
+    notes.some((n) => /^plus\b/i.test(n)) ||
+    // "2 cups" with nothing after it: the unit word ended up as the item.
+    (unit === undefined && lookupUnit(item) !== undefined) ||
+    // "1 large egg or 2 egg whites": the alternative needs its own amount.
+    alternatives.some((a) => /^\d/.test(a)) ||
+    (quantity !== undefined && quantity.min === 0 && quantity.max === undefined);
   const scalable =
     quantity !== undefined && !toTaste && !(unit !== undefined && NON_SCALABLE_UNITS.has(unit));
 
