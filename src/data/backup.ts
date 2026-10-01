@@ -1,5 +1,6 @@
+import { OTHER_AISLE } from '../domain';
 import { BackupDataSchema } from './backupSchema';
-import type { CartCraftDb } from './db';
+import { DEFAULT_SETTINGS, type CartCraftDb } from './db';
 import type { BackupData } from './types';
 
 export const BACKUP_FORMAT = 'cartcraft';
@@ -95,15 +96,38 @@ export function parseBackup(text: string): ParseResult {
   if (!parsed.success) {
     return { ok: false, error: 'invalid', detail: parsed.error.issues[0]?.path.join('.') };
   }
+  const duplicate = firstDuplicateKey(parsed.data);
+  if (duplicate) return { ok: false, error: 'invalid', detail: `duplicate ${duplicate}` };
   return {
     ok: true,
     backup: {
       format: BACKUP_FORMAT,
       schemaVersion: BACKUP_SCHEMA_VERSION,
       exportedAt: typeof envelope.exportedAt === 'number' ? envelope.exportedAt : 0,
-      data: parsed.data,
+      data: withRequiredRecords(parsed.data),
     },
   };
+}
+
+/** bulkAdd fails on duplicate keys, so a crafted or corrupted file is rejected up front. */
+function firstDuplicateKey(data: BackupData): string | undefined {
+  const keys: [string, string[]][] = [
+    ['recipes.id', data.recipes.map((r) => r.id)],
+    ['lists.id', data.lists.map((l) => l.id)],
+    ['pantryStaples.itemKey', data.pantryStaples.map((p) => p.itemKey)],
+    ['aisles.id', data.aisles.map((a) => a.id)],
+    ['aisleOverrides.itemKey', data.aisleOverrides.map((o) => o.itemKey)],
+  ];
+  return keys.find(([, values]) => new Set(values).size !== values.length)?.[0];
+}
+
+/** The app needs an Other aisle (for unknown items) and a settings record; restore them if missing. */
+function withRequiredRecords(data: BackupData): BackupData {
+  const aisles = data.aisles.some((a) => a.id === OTHER_AISLE)
+    ? data.aisles
+    : [...data.aisles, { id: OTHER_AISLE, name: 'Other', order: Math.max(-1, ...data.aisles.map((a) => a.order)) + 1 }];
+  const settings = data.settings.length > 0 ? data.settings : [DEFAULT_SETTINGS];
+  return { ...data, aisles, settings };
 }
 
 export interface BackupSummary {

@@ -34,6 +34,12 @@ export function groupListItems(items: ListItem[], aisles: Aisle[]): ListView {
     }))
     .filter((s) => s.items.length > 0);
 
+  // A backup or edit can leave items pointing at aisles that no longer exist. Never hide them.
+  if (!known.has(OTHER_AISLE)) {
+    const orphans = unchecked.filter((i) => i.group === 'aisle' && !known.has(i.aisleId)).sort(byName);
+    if (orphans.length > 0) sections.push({ id: OTHER_AISLE, title: 'Other', items: orphans });
+  }
+
   return {
     aisles: sections,
     pantry: unchecked.filter((i) => i.group === 'pantry').sort(byName),
@@ -45,6 +51,16 @@ export function itemLabel(item: ListItem, system: UnitSystem): string {
   const amount = formatAmounts(item.amounts, system);
   const name = item.name.charAt(0).toUpperCase() + item.name.slice(1);
   return amount ? `${name}: ${amount}` : name;
+}
+
+/**
+ * Text shown in the item editor. `editItem` parses it back, so the amount, name and notes
+ * ("2 cups milk, whole") all survive an edit.
+ */
+export function itemEditText(item: ListItem, system: UnitSystem): string {
+  const amount = formatAmounts(item.amounts, system);
+  const base = amount ? `${amount} ${item.name}` : item.name;
+  return item.notes ? `${base}, ${item.notes}` : base;
 }
 
 /** Plain text for "Copy list": unchecked items only, grouped by aisle, then pantry. */

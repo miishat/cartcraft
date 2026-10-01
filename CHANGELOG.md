@@ -8,6 +8,7 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 - Import a recipe from a link: paste a recipe page URL and CartCraft reads the recipe data the site publishes. If a site blocks the import or has no recipe data, the form switches to pasting the ingredients.
 
 ### Fixed
+- Backups with duplicate entries are rejected with a clear message instead of failing during import, and a backup without the Other aisle no longer hides list items.
 - Ingredient parsing: "4 oz. can tomato paste" is read as one 4 oz can, "or to taste" and leading "x2" are understood, and bare units ("2 cups"), alternatives with their own amount and zero amounts are flagged for review. Zero amounts no longer display as "pinch".
 - Saving, deleting and building lists now show an inline message when something goes wrong instead of failing silently.
 

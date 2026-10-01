@@ -6,6 +6,7 @@ import {
   addAdhocItem, createList, defaultListName, deleteItem, deleteList, editItem, moveItemToAisle,
   renameList, setItemChecked,
 } from './lists';
+import { itemEditText } from './listView';
 import { draftLinesFromText, saveRecipe } from './recipes';
 
 async function addRecipe(db: CartCraftDb, title: string, text: string, baseServings = 4): Promise<string> {
@@ -99,6 +100,16 @@ describe('list edits', () => {
     const item = (await db.lists.get(listId))!.items.find((i) => i.id === onion.id)!;
     expect(item).toMatchObject({ name: 'red onions', itemKey: 'red onion', aisleId: 'produce', checked: true });
     expect(formatAmounts(item.amounts, 'us')).toBe('3');
+  });
+
+  it('keeps notes when editing through itemEditText', async () => {
+    const { db, listId } = await withList();
+    const id = await addAdhocItem(db, listId, '2 cups milk, whole', sequentialIds('adhoc'));
+    const before = (await db.lists.get(listId))!.items.find((i) => i.id === id)!;
+    await editItem(db, listId, id, itemEditText(before, 'us').replace('2 cups', '3 cups'));
+    const after = (await db.lists.get(listId))!.items.find((i) => i.id === id)!;
+    expect(after.notes).toBe('whole');
+    expect(formatAmounts(after.amounts, 'us')).toBe('3 cups');
   });
 
   it('deletes an item', async () => {
