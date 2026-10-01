@@ -112,6 +112,7 @@ function withRange(min: string, max: string | undefined): string {
 /** Formats one amount in the user's unit system. Counts and discrete units round up. */
 export function formatAmount(amount: Amount, system: UnitSystem): string {
   const { quantity, unit, packageSize } = amount;
+  if (quantity.min <= 0 && (quantity.max ?? 0) <= 0) return '';
   const dimension = dimensionOf(unit);
 
   if (unit !== undefined && (dimension === 'volume' || dimension === 'mass')) {
@@ -136,5 +137,5 @@ export function formatAmount(amount: Amount, system: UnitSystem): string {
 }
 
 export function formatAmounts(amounts: Amount[], system: UnitSystem): string {
-  return amounts.map((a) => formatAmount(a, system)).join(' + ');
+  return amounts.map((a) => formatAmount(a, system)).filter(Boolean).join(' + ');
 }

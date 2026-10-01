@@ -63,6 +63,19 @@ describe('RecipeEditorScreen', () => {
     expect(await db.recipes.count()).toBe(0);
   });
 
+  it('shows an inline error when delete fails and stays on the page', async () => {
+    const db = createTestDb();
+    const ids = sequentialIds('r');
+    const id = await saveRecipe(db, { title: 'Soup', rawText: '1 onion', baseServings: 2, ingredients: draftLinesFromText('1 onion', ids) }, 1, ids);
+    const { user } = renderRoutes(routes(), `/recipes/${id}`, db);
+    await screen.findByDisplayValue('Soup');
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    vi.spyOn(db.recipes, 'delete').mockRejectedValueOnce(new Error('disk full'));
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not delete the recipe. Try again.');
+    expect(screen.getByTestId('location').textContent).toBe(`/recipes/${id}`);
+  });
+
   it('keeps a pending line edit when Save is clicked directly', async () => {
     const { user, db } = renderRoutes(routes(), '/recipes/new');
     await user.type(screen.getByLabelText('Ingredients'), '1 egg');

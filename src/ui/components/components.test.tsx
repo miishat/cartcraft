@@ -36,6 +36,13 @@ describe('ReviewTable', () => {
     expect(screen.getAllByLabelText('Check this line')).toHaveLength(1);
   });
 
+  it('shows "no amount" for a zero amount instead of a stray separator', () => {
+    render(<Harness initial={draftLinesFromText('0 cups sugar', sequentialIds('line'))} />);
+    const text = screen.getByTestId('parsed').textContent ?? '';
+    expect(text.trim().startsWith('·')).toBe(false);
+    expect(text).toContain('no amount · sugar');
+  });
+
   it('re-parses a line when it is edited', async () => {
     const user = userEvent.setup();
     render(<Harness initial={initial()} />);

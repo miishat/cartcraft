@@ -228,3 +228,52 @@ describe('parseIngredientLine: items, notes and flags', () => {
     expect(line.needsReview).toBe(true);
   });
 });
+
+describe('parseIngredientLine: gaps closed in Plan 3', () => {
+  it('reads "4 oz. can tomato paste" as one 4 oz can', () => {
+    const line = parse('4 oz. can tomato paste');
+    expect(line.quantity).toEqual({ min: 1 });
+    expect(line.unit).toBe('can');
+    expect(line.packageSize).toEqual({ quantity: 4, unit: 'oz' });
+    expect(line.item).toBe('tomato paste');
+    expect(line.needsReview).toBe(false);
+  });
+
+  it('does not treat a non-container word after a weight as a package', () => {
+    const line = parse('1 lb ground beef');
+    expect(line.unit).toBe('lb');
+    expect(line.packageSize).toBeUndefined();
+    expect(line.item).toBe('ground beef');
+  });
+
+  it('flags a bare unit with no item', () => {
+    const line = parse('2 cups');
+    expect(line.needsReview).toBe(true);
+  });
+
+  it('drops "or" before "to taste"', () => {
+    for (const raw of ['salt, or to taste', 'salt or to taste']) {
+      const line = parse(raw);
+      expect(line.item).toBe('salt');
+      expect(line.notes).toBe('to taste');
+      expect(line.scalable).toBe(false);
+    }
+  });
+
+  it('reads a leading multiplier like "x2 eggs"', () => {
+    const line = parse('x2 eggs');
+    expect(line.quantity).toEqual({ min: 2 });
+    expect(line.itemKey).toBe('egg');
+  });
+
+  it('flags alternatives that carry their own amount', () => {
+    const line = parse('1 large egg or 2 egg whites');
+    expect(line.alternatives).toEqual(['2 egg whites']);
+    expect(line.needsReview).toBe(true);
+    expect(parse('1 cup butter or margarine').needsReview).toBe(false);
+  });
+
+  it('flags a zero amount', () => {
+    expect(parse('0 cups sugar').needsReview).toBe(true);
+  });
+});

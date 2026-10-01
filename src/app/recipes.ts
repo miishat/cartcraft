@@ -1,6 +1,7 @@
 import { parseIngredientLine, type IngredientLine } from '../domain';
 import { updateSettings, type CartCraftDb } from '../data/db';
 import type { Recipe } from '../data/types';
+import { UserFacingError } from './errors';
 
 export interface RecipeInput {
   id?: string;
@@ -25,7 +26,7 @@ export function reparseLine(line: IngredientLine, raw: string): IngredientLine {
   return parseIngredientLine(raw, line.id);
 }
 
-export class RecipeValidationError extends Error {}
+export class RecipeValidationError extends UserFacingError {}
 
 /** Creates or updates a recipe. Base servings is required and must be positive. */
 export async function saveRecipe(
@@ -61,14 +62,19 @@ export async function deleteRecipe(db: CartCraftDb, id: string): Promise<void> {
 
 /**
  * Asks the browser to keep this site's storage (spec 6). Called after the first save; the
- * result is stored so Settings can show it. Safe to call when the API is missing.
+ * result is stored so Settings can show it. Never throws: a missing API or a browser
+ * error resolves to undefined.
  */
 export async function requestPersistence(
   db: CartCraftDb,
   storage: Pick<StorageManager, 'persist' | 'persisted'> | undefined = globalThis.navigator?.storage,
 ): Promise<boolean | undefined> {
   if (!storage?.persist) return undefined;
-  const granted = (await storage.persisted?.()) || (await storage.persist());
-  await updateSettings(db, { persistGranted: granted });
-  return granted;
+  try {
+    const granted = (await storage.persisted?.()) || (await storage.persist());
+    await updateSettings(db, { persistGranted: granted });
+    return granted;
+  } catch {
+    return undefined;
+  }
 }

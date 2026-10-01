@@ -69,6 +69,13 @@ describe('requestPersistence', () => {
     expect((await getSettings(db)).persistGranted).toBe(true);
   });
 
+  it('swallows browser errors', async () => {
+    const db = createTestDb();
+    const storage = { persisted: vi.fn(async () => false), persist: vi.fn(async () => { throw new Error('denied'); }) };
+    expect(await requestPersistence(db, storage)).toBeUndefined();
+    expect((await getSettings(db)).persistGranted).toBeUndefined();
+  });
+
   it('does nothing when the API is missing', async () => {
     const db = createTestDb();
     expect(await requestPersistence(db, undefined)).toBeUndefined();
