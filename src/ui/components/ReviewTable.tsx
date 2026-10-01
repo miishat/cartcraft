@@ -12,9 +12,10 @@ interface Props {
 
 function parsedSummary(line: IngredientLine, system: UnitSystem): string {
   if (line.isHeader) return 'Section heading';
-  const amount = line.quantity
+  const formatted = line.quantity
     ? formatAmount({ quantity: line.quantity, ...(line.unit ? { unit: line.unit } : {}), ...(line.packageSize ? { packageSize: line.packageSize } : {}) }, system)
-    : 'no amount';
+    : '';
+  const amount = formatted || 'no amount';
   const notes = line.notes ? ` (${line.notes})` : '';
   return `${amount} · ${line.item || '?'}${notes}`;
 }
