@@ -114,7 +114,7 @@ interface ListItem {
 | Table | Key | Contents |
 |---|---|---|
 | `recipes` | `id` | `title`, `sourceUrl?`, `rawText`, `baseServings`, `yieldText?`, `ingredients: IngredientLine[]`, `createdAt`, `updatedAt` |
-| `lists` | `id` | `name`, `createdAt`, `sources: {recipeId, title, targetServings}[]`, `items: ListItem[]`, `extras?: {swaps: string[], tips: string[], generatedAt}` |
+| `lists` | `id` | `name`, `createdAt`, `sources: {recipeId, title, targetServings}[]`, `items: ListItem[]`, `extras?: {swaps: {item, swap}[], tips: string[], generatedAt}` |
 | `pantryStaples` | `itemKey` | items you always have; seeded with salt, black pepper, water, olive oil, vegetable oil |
 | `aisles` | `id` | `name`, `order`; seeded defaults (see 5.6) |
 | `aisleOverrides` | `itemKey` | `aisleId`, `source: "user" \| "llm"` |
