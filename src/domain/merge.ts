@@ -86,5 +86,5 @@ export function buildListItems(selections: RecipeSelection[], ctx: BuildContext)
       fromRecipes: group.fromRecipes,
       notes: group.notes.join('; '),
     }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => a.name.localeCompare(b.name, 'en') || (a.itemKey < b.itemKey ? -1 : a.itemKey > b.itemKey ? 1 : 0));
 }

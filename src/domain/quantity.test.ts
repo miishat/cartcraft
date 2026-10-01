@@ -30,6 +30,22 @@ describe('parseLeadingAmount', () => {
     expect(parseLeadingAmount(text)).toEqual({ quantity, rest });
   });
 
+  it('reads 1-1/2 as a mixed number', () => {
+    expect(parseLeadingAmount('1-1/2 cups sugar')).toEqual({ quantity: { min: 1.5 }, rest: 'cups sugar' });
+  });
+
+  it('still reads 1-2 and 2-3/4 sensibly', () => {
+    expect(parseLeadingAmount('1-2 cups').quantity).toEqual({ min: 1, max: 2 });
+    expect(parseLeadingAmount('2-3/4 cups').quantity).toEqual({ min: 2.75 });
+  });
+
+  it('does not silently drop the second number of a non-increasing range', () => {
+    const r = parseLeadingAmount('3-2 cups');
+    expect(r.quantity).toEqual({ min: 3 });
+    expect(r.rest).toBe('cups');
+    expect(r.dropped).toBe('-2');
+  });
+
   it('returns the text unchanged without a leading number', () => {
     expect(parseLeadingAmount('salt to taste')).toEqual({ rest: 'salt to taste' });
   });

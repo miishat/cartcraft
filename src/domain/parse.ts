@@ -54,6 +54,7 @@ export function parseIngredientLine(raw: string, id: string): IngredientLine {
   }).trim();
 
   let quantity: Quantity | undefined;
+  let unclearRange = false;
   const juice = JUICE_OR_ZEST.exec(text);
   const juiceQty = juice?.[2] === undefined ? undefined : toNumber(juice[2]);
   if (juice && juiceQty !== undefined) {
@@ -65,6 +66,10 @@ export function parseIngredientLine(raw: string, id: string): IngredientLine {
     if (lead.quantity) {
       quantity = lead.quantity;
       text = lead.rest;
+      if (lead.dropped) {
+        notes.push(lead.dropped);
+        unclearRange = true;
+      }
     } else {
       const article = ARTICLE.exec(text);
       const afterArticle = article ? text.slice(article[0].length) : '';
@@ -162,7 +167,7 @@ export function parseIngredientLine(raw: string, id: string): IngredientLine {
   if (toTaste) notes.push('to taste');
 
   const needsReview =
-    !item || /\s+and\s+/i.test(item) || notes.some((n) => /^plus\b/i.test(n));
+    unclearRange || !item || /\s+and\s+/i.test(item) || notes.some((n) => /^plus\b/i.test(n));
   const scalable =
     quantity !== undefined && !toTaste && !(unit !== undefined && NON_SCALABLE_UNITS.has(unit));
 

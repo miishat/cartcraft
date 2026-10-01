@@ -5,7 +5,8 @@ import type { IngredientLine } from './types';
  * not scalable ("to taste", "pinch") are returned unchanged.
  */
 export function scaleLine(line: IngredientLine, baseServings: number, targetServings: number): IngredientLine {
-  if (!line.scalable || !line.quantity || baseServings <= 0 || targetServings === baseServings) return line;
+  if (!line.scalable || !line.quantity || baseServings <= 0 ||
+    !(targetServings > 0) || targetServings === baseServings) return line;
   const factor = targetServings / baseServings;
   const { min, max } = line.quantity;
   return {

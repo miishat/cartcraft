@@ -164,7 +164,7 @@ Input: selected recipes with base and target servings, plus a context of pantry 
 
 ### 5.5 Display: `formatAmount(amount, unitSystem): string`
 
-- Volume, US: choose the largest of cup, tbsp, tsp where the value is at least 1, snap to the nearest 1/8 or 1/3 ("6 tbsp", "1 1/2 cups"). Values under 1/8 tsp display as "pinch".
+- Volume, US: use cups when the value is at least 1 cup or is 1/4, 1/3, 1/2, 2/3 or 3/4 cup ("1/2 cup", "3/4 cup", "1 1/2 cups"); otherwise tbsp when at least 1 tbsp ("3 tbsp", "6 tbsp"), else tsp; snap to the nearest 1/8 or 1/3. Unit labels follow the snapped value ("1 cup", never "1 cups"). Values under 1/8 tsp display as "pinch".
 - Mass, US: oz under 16 oz, lb at or above, snapped to 1/4.
 - Metric: g under 1000 then kg; mL under 1000 then L. At most two decimals for kg/L ("1.25 kg"), whole numbers for g/mL (one decimal under 10).
 - Count units and packaged units round up for display ("4.5 eggs" -> "5", "0.5 can" -> "1 can (14 oz)").

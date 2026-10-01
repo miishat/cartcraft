@@ -19,12 +19,19 @@ export function toNumber(token: string): number | undefined {
 }
 
 /** Reads a quantity or range at the start of `text` and returns the remaining text. */
-export function parseLeadingAmount(text: string): { quantity?: Quantity; rest: string } {
+export function parseLeadingAmount(text: string): { quantity?: Quantity; rest: string; dropped?: string } {
   const match = LEADING_AMOUNT.exec(text);
   if (!match || match[1] === undefined) return { rest: text };
   const min = toNumber(match[1]);
   if (min === undefined) return { rest: text };
-  const max = match[2] === undefined ? undefined : toNumber(match[2]);
-  const quantity: Quantity = max !== undefined && max > min ? { min, max } : { min };
-  return { quantity, rest: text.slice(match[0].length).trim() };
+  const rest = text.slice(match[0].length).trim();
+  if (match[2] === undefined) return { quantity: { min }, rest };
+  const max = toNumber(match[2]);
+  if (max !== undefined && max > min) return { quantity: { min, max }, rest };
+  // "1-1/2" is a mixed number written with a hyphen, not a range.
+  const separator = match[0].slice(match[1].length, match[0].length - match[2].length);
+  if (separator === '-' && /^\d+$/.test(match[1]) && /^\d+\/\d+$/.test(match[2]) && max !== undefined && max < 1) {
+    return { quantity: { min: min + max }, rest };
+  }
+  return { quantity: { min }, rest, dropped: match[0].slice(match[1].length).trim() };
 }

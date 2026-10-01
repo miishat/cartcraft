@@ -14,7 +14,9 @@ function parseOne(value: unknown): { servings?: number; text?: string; isServing
   if (!text) return { isServing: false };
   const first = /\d+(?:\.\d+)?/.exec(text);
   const n = first ? Number(first[0]) : undefined;
-  if (/^\d+(?:\.\d+)?$/.test(text)) return { servings: n, isServing: true };
+  if (/^\d+(?:\.\d+)?$/.test(text)) {
+    return n !== undefined && n > 0 ? { servings: n, isServing: true } : { isServing: false };
+  }
   if (n !== undefined && n > 0 && (SERVING_WORDS.test(text) || /^\d+\s*-\s*\d+$/.test(text))) {
     return { servings: n, text, isServing: true };
   }

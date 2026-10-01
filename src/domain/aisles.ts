@@ -24,14 +24,15 @@ const BY_AISLE: Record<string, string[]> = {
   produce: [
     'apple', 'avocado', 'banana', 'basil', 'bean sprout', 'beet', 'bell pepper', 'berry', 'blackberry',
     'blueberry', 'bok choy', 'broccoli', 'brussels sprout', 'butternut squash', 'cabbage', 'cantaloupe',
-    'carrot', 'cauliflower', 'celery', 'chard', 'cherry', 'chili', 'chive', 'cilantro', 'collard green',
+    'carrot', 'cauliflower', 'celery', 'chard', 'cherry', 'chili', 'chive', 'cilantro', 'collard greens',
     'corn', 'cranberry', 'cucumber', 'dill', 'eggplant', 'fennel', 'garlic', 'ginger', 'grape',
-    'grapefruit', 'green bean', 'green onion', 'herb', 'jalapeño', 'jalapeno', 'kale', 'kiwi', 'leek',
+    'grapefruit', 'green bean', 'green onion', 'herb', 'jalapeno', 'kale', 'kiwi', 'leek',
     'lemon', 'lemongrass', 'lettuce', 'lime', 'mango', 'melon', 'mint', 'mushroom', 'onion', 'orange',
     'oregano leaf', 'parsley', 'parsnip', 'peach', 'pear', 'pea', 'pineapple', 'plum', 'potato',
-    'pumpkin', 'radish', 'raspberry', 'red onion', 'romaine', 'rosemary', 'sage', 'scallion', 'shallot',
+    'pumpkin', 'radish', 'raspberry', 'red onion', 'romaine', 'rosemary', 'sage', 'shallot',
     'snap pea', 'spinach', 'squash', 'strawberry', 'sweet potato', 'thyme', 'tomato', 'watermelon',
-    'yellow onion', 'zucchini', 'arugula', 'asparagus', 'salad green', 'serrano', 'poblano',
+    'yellow onion', 'zucchini', 'arugula', 'asparagus', 'salad greens', 'serrano', 'poblano',
+    'garlic clove', 'green pepper', 'lemon juice', 'lime juice',
   ],
   'meat-seafood': [
     'bacon', 'beef', 'breast', 'brisket', 'chicken', 'chop', 'chorizo', 'cod', 'crab', 'drumstick',
@@ -52,7 +53,7 @@ const BY_AISLE: Record<string, string[]> = {
   pantry: [
     'all-purpose flour', 'almond', 'baking powder', 'baking soda', 'barley', 'breadcrumb',
     'brown sugar', 'bulgur', 'cashew', 'cereal', 'chickpea flour', 'chocolate', 'chocolate chip',
-    'cocoa powder', 'cornmeal', 'cornstarch', 'couscous', 'cracker', 'flour', 'gram flour', 'granola',
+    'cocoa powder', 'cornmeal', 'cornstarch', 'corn starch', 'couscous', 'cracker', 'flour', 'gram flour', 'granola',
     'honey', 'lentil', 'maple syrup', 'molasses', 'noodle', 'nut', 'oat', 'panko', 'pasta', 'peanut',
     'peanut butter', 'pecan', 'pine nut', 'powdered sugar', 'quinoa', 'raisin', 'rice', 'rolled oat',
     'sesame seed', 'spaghetti', 'sugar', 'superfine sugar', 'walnut', 'yeast', 'penne', 'macaroni',
@@ -62,7 +63,7 @@ const BY_AISLE: Record<string, string[]> = {
   canned: [
     'applesauce', 'bean', 'black bean', 'broth', 'chickpea', 'coconut milk', 'diced tomato',
     'kidney bean', 'pinto bean', 'stock', 'tomato paste', 'tomato sauce', 'crushed tomato', 'tuna',
-    'salsa', 'sauce', 'soy sauce', 'fish sauce', 'hot sauce', 'worcestershire sauce', 'ketchup',
+    'salsa', 'sauce', 'tomato soup', 'soy sauce', 'fish sauce', 'hot sauce', 'worcestershire sauce', 'ketchup',
     'mustard', 'dijon mustard', 'mayonnaise', 'vinegar', 'balsamic vinegar', 'olive', 'caper',
     'pickle', 'jam', 'peanut sauce', 'pesto', 'curry paste', 'sriracha', 'anchovy', 'artichoke heart',
     'roasted red pepper', 'evaporated milk', 'condensed milk', 'sweetened condensed milk', 'bouillon',

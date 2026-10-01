@@ -12,7 +12,10 @@ describe('itemKey', () => {
     ['Scallions', 'green onion'],
     ["confectioners' sugar", 'powdered sugar'],
     ['molasses', 'molasses'],
-    ['jalapeños', 'jalapeño'],
+    ['jalapeños', 'jalapeno'],
+    ['Crème fraîche', 'creme fraiche'],
+    ['ramen', 'ramen'],
+    ['collard greens', 'collard greens'],
     ['', ''],
   ])('%s -> %s', (item, key) => {
     expect(itemKey(item)).toBe(key);

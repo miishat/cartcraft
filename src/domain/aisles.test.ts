@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AISLE_DICTIONARY, DEFAULT_AISLES, classifyAisle } from './aisles';
+import { itemKey } from './itemKey';
 import { parseIngredientLine } from './parse';
 
 const none = new Map<string, string>();
@@ -33,6 +34,27 @@ describe('classifyAisle', () => {
 
   it('has a useful starter dictionary', () => {
     expect(Object.keys(AISLE_DICTIONARY).length).toBeGreaterThan(250);
+  });
+});
+
+describe('dictionary integrity', () => {
+  it('every key is a fixed point of itemKey', () => {
+    const bad = Object.keys(AISLE_DICTIONARY).filter((k) => itemKey(k) !== k);
+    expect(bad).toEqual([]);
+  });
+
+  it.each([
+    ['garlic clove', 'produce'],
+    ['green pepper', 'produce'],
+    ['lemon juice', 'produce'],
+    ['lime juice', 'produce'],
+    ['corn starch', 'pantry'],
+    ['tomato soup', 'canned'],
+    ['collard greens', 'produce'],
+    ['salad greens', 'produce'],
+    ['ramen', 'pantry'],
+  ])('%s -> %s via itemKey', (item, aisle) => {
+    expect(classifyAisle(itemKey(item), none)).toBe(aisle);
   });
 });
 

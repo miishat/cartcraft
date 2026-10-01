@@ -13,6 +13,8 @@ describe('parseYield', () => {
     [undefined, {}],
     ['', {}],
     [0, {}],
+    ['0', {}],
+    ['0.0', {}],
     [{ value: 4 }, {}],
   ])('%j -> %j', (input, expected) => {
     expect(parseYield(input)).toEqual(expected);

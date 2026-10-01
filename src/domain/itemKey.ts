@@ -1,6 +1,6 @@
 import pluralize from 'pluralize';
 
-for (const word of ['molasses', 'hummus', 'couscous', 'asparagus', 'swiss', 'grits', 'greens']) {
+for (const word of ['molasses', 'hummus', 'couscous', 'asparagus', 'swiss', 'grits', 'greens', 'ramen']) {
   pluralize.addUncountableRule(word);
 }
 
@@ -37,7 +37,9 @@ export function itemKey(item: string): string {
   const cleaned = item
     .toLowerCase()
     .replace(/'/g, '')
-    .replace(/[^a-z0-9ñéèáíóúü\s-]/g, ' ')
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .replace(/[^a-z0-9\s-]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
   const words = cleaned.split(' ').filter(Boolean);

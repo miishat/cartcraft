@@ -1102,7 +1102,7 @@ git commit -m "feat(domain): parse ingredient lines into structured, reviewable 
 - Consumes: `parseIngredientLine` (tests only); `dimensionOf`, `getUnit`, `isPackagedUnit`, `toBaseUnits`, `unitLabel` (units.ts); `Amount`, `IngredientLine`, `PackageSize`, `UnitId`, `UnitSystem` (types.ts).
 - Produces: `scaleLine(line: IngredientLine, baseServings: number, targetServings: number): IngredientLine`; `formatFraction(n: number, steps?): string`, `formatAmount(amount: Amount, system: UnitSystem): string`, `formatAmounts(amounts: Amount[], system: UnitSystem): string`.
 
-Display rules (spec 5.5): US volume uses the largest of cup, tbsp, tsp whose value is at least 1, snapped to eighths or thirds; under 1/8 tsp shows "pinch". US mass is oz under 16 oz, else lb, snapped to quarters. Metric uses g/ml under 1000, else kg/L with at most 2 decimals. Counts and discrete units round up. Package sizes read as on the label unless the label uses the other unit system.
+Display rules (spec 5.5): US volume uses cups when the value is at least 1 cup or is 1/4, 1/3, 1/2, 2/3 or 3/4 cup, otherwise tbsp when at least 1 tbsp, else tsp, snapped to eighths or thirds, with singular/plural labels chosen from the snapped value; under 1/8 tsp shows "pinch". US mass is oz under 16 oz, else lb, snapped to quarters. Metric uses g/ml under 1000, else kg/L with at most 2 decimals. Counts and discrete units round up. Package sizes read as on the label unless the label uses the other unit system.
 
 - [ ] **Step 1: Write the failing tests**
 

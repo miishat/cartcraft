@@ -29,6 +29,16 @@ describe('formatAmount (us)', () => {
     [{ quantity: { min: 0.5 }, unit: 'can', packageSize: { quantity: 14, unit: 'oz' } }, '1 can (14 oz)'],
     [{ quantity: { min: 1 }, unit: 'pinch' }, '1 pinch'],
     [{ quantity: { min: 1 }, unit: 'can', packageSize: { quantity: 28, unit: 'oz' } }, '1 can (28 oz)'],
+    [{ quantity: { min: 16 }, unit: 'tbsp' }, '1 cup'],
+    [{ quantity: { min: 236.5888 }, unit: 'ml' }, '1 cup'],
+    [{ quantity: { min: 0.5 }, unit: 'cup' }, '1/2 cup'],
+    [{ quantity: { min: 0.75 }, unit: 'cup' }, '3/4 cup'],
+    [{ quantity: { min: 1 / 3 }, unit: 'cup' }, '1/3 cup'],
+    [{ quantity: { min: 2 / 3 }, unit: 'cup' }, '2/3 cup'],
+    [{ quantity: { min: 0.25 }, unit: 'cup' }, '1/4 cup'],
+    [{ quantity: { min: 3 }, unit: 'tbsp' }, '3 tbsp'],
+    [{ quantity: { min: 6 }, unit: 'tbsp' }, '6 tbsp'],
+    [{ quantity: { min: 0.125 }, unit: 'cup' }, '2 tbsp'],
   ])('%j -> %s', (amount, expected) => {
     expect(formatAmount(amount, 'us')).toBe(expected);
   });

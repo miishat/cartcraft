@@ -21,6 +21,22 @@ describe('parseIngredientLine: amounts', () => {
     expect(line.item).toBe(item);
   });
 
+  it('1-1/2 cups sugar is 1.5 cups', () => {
+    const line = parse('1-1/2 cups sugar');
+    expect(line.quantity).toEqual({ min: 1.5 });
+    expect(line.unit).toBe('cup');
+    expect(line.item).toBe('sugar');
+    expect(line.needsReview).toBe(false);
+  });
+
+  it('a non-increasing range is flagged and keeps the dropped text in notes', () => {
+    const line = parse('3-2 cups sugar');
+    expect(line.needsReview).toBe(true);
+    expect(line.notes).toContain('-2');
+    expect(line.unit).toBe('cup');
+    expect(line.item).toBe('sugar');
+  });
+
   it('keeps 1/3 unrounded', () => {
     expect(parse('1/3 cup sugar').quantity?.min).toBeCloseTo(1 / 3, 10);
   });
@@ -41,7 +57,7 @@ describe('parseIngredientLine: amounts', () => {
     const line = parse('1 or 2 jalapeños');
     expect(line.quantity).toEqual({ min: 1, max: 2 });
     expect(line.unit).toBeUndefined();
-    expect(line.itemKey).toBe('jalapeño');
+    expect(line.itemKey).toBe('jalapeno');
   });
 
   it('about 2 cups spinach is approximate', () => {

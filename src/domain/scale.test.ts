@@ -6,6 +6,13 @@ const scaled = (raw: string, base: number, target: number) =>
   scaleLine(parseIngredientLine(raw, 'id'), base, target);
 
 describe('scaleLine', () => {
+  it('returns the line unchanged for a non-positive target', () => {
+    const line = parseIngredientLine('1 cup milk', 'id');
+    expect(scaleLine(line, 4, 0)).toBe(line);
+    expect(scaleLine(line, 4, -2)).toBe(line);
+    expect(scaleLine(line, 4, Number.NaN)).toBe(line);
+  });
+
   it('multiplies the quantity by target / base', () => {
     expect(scaled('1 cup milk', 4, 6).quantity).toEqual({ min: 1.5 });
   });

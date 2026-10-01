@@ -60,6 +60,20 @@ describe('buildListItems', () => {
       .toEqual({ tomato: '1 can (14 oz) + 1 can (28 oz)' });
   });
 
+  it('1/2 cup + 8 tbsp reads as 1 cup, not "1 cups"', () => {
+    expect(shown([recipe('A', ['1/2 cup sugar']), recipe('B', ['8 tbsp sugar'])])).toEqual({ sugar: '1 cup' });
+  });
+
+  it('sorts deterministically with a locale-independent compare and itemKey tie-break', () => {
+    const items = build([recipe('A', ['1 egg', '1 Egg Yolk', '1 apple']), recipe('B', ['1 Apple'])]);
+    expect(items.map((i) => i.itemKey)).toEqual(['apple', 'egg', 'egg yolk']);
+    const tied = build([{ title: 'T', baseServings: 1, targetServings: 1, ingredients: [
+      { ...parseIngredientLine('1 zucchini', 'z1'), item: 'Same', itemKey: 'b-key' },
+      { ...parseIngredientLine('1 zucchini', 'z2'), item: 'Same', itemKey: 'a-key' },
+    ] }]);
+    expect(tied.map((i) => i.itemKey)).toEqual(['a-key', 'b-key']);
+  });
+
   it('does not merge different items', () => {
     expect(shown([recipe('A', ['1 onion']), recipe('B', ['1 red onion'])])).toEqual({ onion: '1', 'red onion': '1' });
   });
