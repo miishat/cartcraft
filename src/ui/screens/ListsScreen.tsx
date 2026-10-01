@@ -1,0 +1,51 @@
+import { useLiveQuery } from 'dexie-react-hooks';
+import { Trash2 } from 'lucide-react';
+import { Link } from 'react-router';
+import { deleteList } from '../../app/lists';
+import { useDb } from '../db';
+
+/** Saved lists, newest first. */
+export function ListsScreen() {
+  const db = useDb();
+  const lists = useLiveQuery(() => db.lists.orderBy('createdAt').reverse().toArray(), [db]);
+  if (!lists) return null;
+
+  const onDelete = async (id: string, name: string) => {
+    if (window.confirm(`Delete "${name}"?`)) await deleteList(db, id);
+  };
+
+  return (
+    <div className="mx-auto max-w-2xl space-y-4">
+      <h1 className="text-2xl font-semibold text-slate-900">Lists</h1>
+      {lists.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-500">
+          No lists yet. Select recipes and build one.
+        </p>
+      ) : (
+        <ul className="space-y-2">
+          {lists.map((list) => {
+            const checked = list.items.filter((i) => i.checked).length;
+            return (
+              <li key={list.id} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3">
+                <Link to={`/lists/${list.id}`} className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-slate-900">{list.name}</p>
+                  <p className="text-xs text-slate-500">
+                    {checked} of {list.items.length} items checked
+                  </p>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => void onDelete(list.id, list.name)}
+                  className="p-2 text-slate-400 hover:text-red-600"
+                  aria-label={`Delete ${list.name}`}
+                >
+                  <Trash2 size={16} />
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
