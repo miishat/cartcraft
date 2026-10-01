@@ -8,18 +8,21 @@ import {
   addAdhocItem, deleteItem, editItem, moveItemToAisle, renameList, setItemChecked,
 } from '../../app/lists';
 import { groupListItems, listAsText } from '../../app/listView';
+import { ErrorNote } from '../components/ErrorNote';
 import { ListItemRow } from '../components/ListItemRow';
 import { useDb } from '../db';
 import { useAisles, useSettings } from '../hooks';
+import { useAsyncAction } from '../useAsyncAction';
 
 interface Props {
   makeId?: () => string;
   now?: () => number;
   undoMs?: number;
+  copiedMs?: number;
 }
 
 /** Shopping mode for one saved list. */
-export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000 }: Props) {
+export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copiedMs = 3000 }: Props) {
   const { id = '' } = useParams();
   const db = useDb();
   const settings = useSettings();
@@ -28,48 +31,63 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000 }: Pr
   const [adhoc, setAdhoc] = useState('');
   const [undo, setUndo] = useState<ListItem | null>(null);
   const [copied, setCopied] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const undoTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const copiedTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  useEffect(() => () => clearTimeout(timer.current), []);
+  useEffect(
+    () => () => {
+      clearTimeout(undoTimer.current);
+      clearTimeout(copiedTimer.current);
+    },
+    [],
+  );
+
+  /** Runs any list change; a failure shows one inline message instead of an unhandled rejection. */
+  const act = useAsyncAction((fn: () => Promise<void>) => fn(), 'That change did not save. Try again.');
+  const copy = useAsyncAction(async (text: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    clearTimeout(copiedTimer.current);
+    copiedTimer.current = setTimeout(() => setCopied(false), copiedMs);
+  }, 'Could not copy. Select the list and copy it manually.');
 
   if (list === undefined || aisles === undefined) return null;
   if (list === null) return <p className="text-slate-500">List not found.</p>;
 
   const view = groupListItems(list.items, aisles);
 
-  const toggle = async (item: ListItem) => {
-    const checking = !item.checked;
-    await setItemChecked(db, list.id, item.id, checking, now());
-    clearTimeout(timer.current);
-    if (checking) {
-      setUndo(item);
-      timer.current = setTimeout(() => setUndo(null), undoMs);
-    } else {
+  const toggle = (item: ListItem) =>
+    act.run(async () => {
+      const checking = !item.checked;
+      await setItemChecked(db, list.id, item.id, checking, now());
+      clearTimeout(undoTimer.current);
+      if (checking) {
+        setUndo(item);
+        undoTimer.current = setTimeout(() => setUndo(null), undoMs);
+      } else {
+        setUndo(null);
+      }
+    });
+
+  const undoCheck = () =>
+    act.run(async () => {
+      if (!undo) return;
+      await setItemChecked(db, list.id, undo.id, false, now());
       setUndo(null);
-    }
-  };
+    });
 
-  const undoCheck = async () => {
-    if (!undo) return;
-    await setItemChecked(db, list.id, undo.id, false, now());
-    setUndo(null);
-  };
-
-  const onAdd = async (e: FormEvent) => {
+  const onAdd = (e: FormEvent) => {
     e.preventDefault();
     if (!adhoc.trim()) return;
-    await addAdhocItem(db, list.id, adhoc, makeId);
-    setAdhoc('');
+    void act.run(async () => {
+      await addAdhocItem(db, list.id, adhoc, makeId);
+      setAdhoc('');
+    });
   };
 
-  const onRename = async () => {
+  const onRename = () => {
     const name = window.prompt('List name', list.name);
-    if (name?.trim()) await renameList(db, list.id, name);
-  };
-
-  const onCopy = async () => {
-    await navigator.clipboard.writeText(listAsText(list.name, list.items, aisles, settings.unitSystem));
-    setCopied(true);
+    if (name?.trim()) void act.run(() => renameList(db, list.id, name));
   };
 
   const row = (item: ListItem) => (
@@ -79,9 +97,9 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000 }: Pr
       aisles={aisles}
       unitSystem={settings.unitSystem}
       onToggle={() => void toggle(item)}
-      onEdit={(text) => void editItem(db, list.id, item.id, text)}
-      onDelete={() => void deleteItem(db, list.id, item.id)}
-      onMove={(aisleId) => void moveItemToAisle(db, list.id, item.id, aisleId)}
+      onEdit={(text) => void act.run(() => editItem(db, list.id, item.id, text))}
+      onDelete={() => void act.run(() => deleteItem(db, list.id, item.id))}
+      onMove={(aisleId) => void act.run(() => moveItemToAisle(db, list.id, item.id, aisleId))}
     />
   );
 
@@ -93,15 +111,21 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000 }: Pr
           <p className="text-sm text-slate-500">From {list.sources.map((s) => `${s.title} (${s.targetServings})`).join(', ')}</p>
         </div>
         <div className="flex shrink-0 gap-1">
-          <button type="button" onClick={() => void onRename()} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Rename list">
+          <button type="button" onClick={onRename} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Rename list">
             <Pencil size={18} />
           </button>
-          <button type="button" onClick={() => void onCopy()} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Copy list as text">
+          <button
+            type="button"
+            onClick={() => void copy.run(listAsText(list.name, list.items, aisles, settings.unitSystem))}
+            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+            aria-label="Copy list as text"
+          >
             <Copy size={18} />
           </button>
         </div>
       </div>
       {copied && <p role="status" className="text-sm text-emerald-700">Copied to clipboard</p>}
+      <ErrorNote message={act.error ?? copy.error} />
 
       <form onSubmit={onAdd} className="flex gap-2">
         <input

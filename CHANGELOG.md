@@ -11,6 +11,7 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 - Backups with duplicate entries are rejected with a clear message instead of failing during import, and a backup without the Other aisle no longer hides list items.
 - Ingredient parsing: "4 oz. can tomato paste" is read as one 4 oz can, "or to taste" and leading "x2" are understood, and bare units ("2 cups"), alternatives with their own amount and zero amounts are flagged for review. Zero amounts no longer display as "pinch".
 - Saving, deleting and building lists now show an inline message when something goes wrong instead of failing silently.
+- Editing a list item keeps its notes. List and Settings actions show an inline message when they fail, "Copied" clears after a few seconds, Safari backup downloads are no longer cut off, the same backup file can be picked twice, and clearing an aisle name restores it.
 
 ## [0.1.0] - 2026-10-01
 

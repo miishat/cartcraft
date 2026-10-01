@@ -7,8 +7,10 @@ import {
   type BackupFile, type ParseResult,
 } from '../../data/backup';
 import { updateSettings } from '../../data/db';
+import { ErrorNote } from '../components/ErrorNote';
 import { useDb } from '../db';
 import { useAisles, useSettings } from '../hooks';
+import { useAsyncAction } from '../useAsyncAction';
 
 const IMPORT_ERRORS: Record<Exclude<ParseResult, { ok: true }>['error'], string> = {
   too_large: 'That file is too large to be a CartCraft backup.',
@@ -69,7 +71,8 @@ function download(text: string, fileName: string) {
   a.href = url;
   a.download = fileName;
   a.click();
-  URL.revokeObjectURL(url);
+  // Safari starts the download asynchronously; revoking at once can cancel it.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 interface Props {
@@ -95,18 +98,17 @@ export function SettingsScreen({ now = Date.now }: Props) {
     });
   }, []);
 
-  const onAddStaple = async (e: FormEvent) => {
-    e.preventDefault();
-    if (await addPantryStaple(db, staple)) setStaple('');
-  };
+  const prefs = useAsyncAction((fn: () => Promise<void>) => fn(), 'Could not save that setting. Try again.');
+  const pantryAction = useAsyncAction((fn: () => Promise<void>) => fn(), 'Could not update pantry staples. Try again.');
+  const aisleAction = useAsyncAction((fn: () => Promise<void>) => fn(), 'Could not update aisles. Try again.');
 
-  const onExport = async () => {
+  const exportAction = useAsyncAction(async () => {
     const at = now();
     download(serializeBackup(await exportBackup(db, at)), backupFileName(at));
     setMessage('Backup downloaded.');
-  };
+  }, 'Could not create the backup. Try again.');
 
-  const onShare = async () => {
+  const shareAction = useAsyncAction(async () => {
     const at = now();
     const file = shareableFile(serializeBackup(await exportBackup(db, at)), backupFileName(at));
     try {
@@ -114,6 +116,13 @@ export function SettingsScreen({ now = Date.now }: Props) {
     } catch (err) {
       if (!(err instanceof DOMException && err.name === 'AbortError')) setMessage('Sharing failed. Use Export backup instead.');
     }
+  }, 'Could not create the backup. Try again.');
+
+  const onAddStaple = (e: FormEvent) => {
+    e.preventDefault();
+    void pantryAction.run(async () => {
+      if (await addPantryStaple(db, staple)) setStaple('');
+    });
   };
 
   const readImport = (text: string) => {
@@ -127,27 +136,25 @@ export function SettingsScreen({ now = Date.now }: Props) {
     }
   };
 
-  const onFile = async (file: File | undefined) => {
-    if (!file) return;
+  const fileAction = useAsyncAction(async (file: File) => {
     if (file.size > MAX_BACKUP_BYTES) {
       setPending(null);
       setMessage(IMPORT_ERRORS.too_large);
       return;
     }
     readImport(await file.text());
-  };
+  }, 'Could not read that file.');
 
-  const onConfirmImport = async () => {
-    if (!pending) return;
-    await importBackup(db, pending, now());
+  const importAction = useAsyncAction(async (backup: BackupFile) => {
+    await importBackup(db, backup, now());
     setPending(null);
     setPasted('');
     setMessage('Import complete. Your previous data can be restored with Undo last import.');
-  };
+  }, 'Import failed. Your data was not changed.');
 
-  const onUndo = async () => {
+  const undoAction = useAsyncAction(async () => {
     if (await undoLastImport(db)) setMessage('Previous data restored.');
-  };
+  }, 'Could not restore the previous data. Try again.');
 
   const summary = pending ? summarizeBackup(pending.data) : null;
 
@@ -160,12 +167,13 @@ export function SettingsScreen({ now = Date.now }: Props) {
           <legend className="sr-only">Unit system</legend>
           {(['us', 'metric'] as const).map((system) => (
             <label key={system} className="flex items-center gap-2">
-              <input type="radio" name="units" checked={settings.unitSystem === system} onChange={() => void updateSettings(db, { unitSystem: system })} />
+              <input type="radio" name="units" checked={settings.unitSystem === system} onChange={() => void prefs.run(() => updateSettings(db, { unitSystem: system }))} />
               {system === 'us' ? 'US (cups, oz, lb)' : 'Metric (ml, g, kg)'}
             </label>
           ))}
         </fieldset>
-        <DefaultServings value={settings.defaultServings} onSave={(n) => void updateSettings(db, { defaultServings: n })} />
+        <DefaultServings value={settings.defaultServings} onSave={(n) => void prefs.run(() => updateSettings(db, { defaultServings: n }))} />
+        <ErrorNote message={prefs.error} />
       </Section>
 
       <Section title="Pantry staples">
@@ -174,7 +182,7 @@ export function SettingsScreen({ now = Date.now }: Props) {
           {pantry?.map((p) => (
             <li key={p.itemKey} className="inline-flex items-center gap-1 rounded-full bg-slate-100 py-1 pl-3 pr-1 text-sm">
               {p.itemKey}
-              <button type="button" onClick={() => void removePantryStaple(db, p.itemKey)} className="rounded-full p-1 hover:bg-white" aria-label={`Remove ${p.itemKey}`}>
+              <button type="button" onClick={() => void pantryAction.run(() => removePantryStaple(db, p.itemKey))} className="rounded-full p-1 hover:bg-white" aria-label={`Remove ${p.itemKey}`}>
                 <X size={12} />
               </button>
             </li>
@@ -184,6 +192,7 @@ export function SettingsScreen({ now = Date.now }: Props) {
           <input className="flex-1 rounded border border-slate-200 px-2 py-1" value={staple} onChange={(e) => setStaple(e.target.value)} aria-label="New pantry staple" placeholder="e.g. garlic powder" />
           <button type="submit" className="rounded bg-slate-900 px-3 py-1 text-sm text-white">Add</button>
         </form>
+        <ErrorNote message={pantryAction.error} />
       </Section>
 
       <Section title="Aisles">
@@ -195,17 +204,22 @@ export function SettingsScreen({ now = Date.now }: Props) {
                 className="flex-1 rounded border border-slate-200 px-2 py-1"
                 defaultValue={aisle.name}
                 aria-label={`Name of ${aisle.name}`}
-                onBlur={(e) => e.target.value.trim() && e.target.value !== aisle.name && void renameAisle(db, aisle.id, e.target.value)}
+                onBlur={(e) => {
+                  const name = e.target.value.trim();
+                  if (!name) e.target.value = aisle.name;
+                  else if (name !== aisle.name) void aisleAction.run(() => renameAisle(db, aisle.id, name));
+                }}
               />
-              <button type="button" disabled={index === 0} onClick={() => void moveAisle(db, aisle.id, 'up')} className="p-1 disabled:opacity-30" aria-label={`Move ${aisle.name} up`}>
+              <button type="button" disabled={index === 0} onClick={() => void aisleAction.run(() => moveAisle(db, aisle.id, 'up'))} className="p-1 disabled:opacity-30" aria-label={`Move ${aisle.name} up`}>
                 <ArrowUp size={16} />
               </button>
-              <button type="button" disabled={index === aisles.length - 1} onClick={() => void moveAisle(db, aisle.id, 'down')} className="p-1 disabled:opacity-30" aria-label={`Move ${aisle.name} down`}>
+              <button type="button" disabled={index === aisles.length - 1} onClick={() => void aisleAction.run(() => moveAisle(db, aisle.id, 'down'))} className="p-1 disabled:opacity-30" aria-label={`Move ${aisle.name} down`}>
                 <ArrowDown size={16} />
               </button>
             </li>
           ))}
         </ol>
+        <ErrorNote message={aisleAction.error} />
       </Section>
 
       <Section title="Backup">
@@ -213,16 +227,26 @@ export function SettingsScreen({ now = Date.now }: Props) {
           Data lives only on this device. Export a backup to move it to another device. Your AI key is never included.
         </p>
         <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={() => void onExport()} className="rounded-lg bg-slate-900 px-4 py-2 text-sm text-white">Export backup</button>
+          <button type="button" onClick={() => void exportAction.run()} className="rounded-lg bg-slate-900 px-4 py-2 text-sm text-white">Export backup</button>
           {shareable && (
-            <button type="button" onClick={() => void onShare()} className="rounded-lg border border-slate-300 px-4 py-2 text-sm">Share backup</button>
+            <button type="button" onClick={() => void shareAction.run()} className="rounded-lg border border-slate-300 px-4 py-2 text-sm">Share backup</button>
           )}
           <label className="cursor-pointer rounded-lg border border-slate-300 px-4 py-2 text-sm">
             Import file
-            <input type="file" accept=".json,application/json,text/plain" className="sr-only" onChange={(e) => void onFile(e.target.files?.[0])} />
+            <input
+              type="file"
+              accept=".json,application/json,text/plain"
+              className="sr-only"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                // Reset so picking the same file again still fires change.
+                e.target.value = '';
+                if (file) void fileAction.run(file);
+              }}
+            />
           </label>
           {canUndo && (
-            <button type="button" onClick={() => void onUndo()} className="rounded-lg border border-amber-400 px-4 py-2 text-sm text-amber-800">Undo last import</button>
+            <button type="button" onClick={() => void undoAction.run()} className="rounded-lg border border-amber-400 px-4 py-2 text-sm text-amber-800">Undo last import</button>
           )}
         </div>
         <details>
@@ -230,18 +254,19 @@ export function SettingsScreen({ now = Date.now }: Props) {
           <textarea className="mt-2 h-24 w-full rounded border border-slate-200 p-2 font-mono text-xs" value={pasted} onChange={(e) => setPasted(e.target.value)} aria-label="Paste backup" />
           <button type="button" disabled={!pasted.trim()} onClick={() => readImport(pasted)} className="mt-1 rounded border border-slate-300 px-3 py-1 text-sm disabled:opacity-40">Check backup</button>
         </details>
-        {summary && (
+        {summary && pending && (
           <div role="alert" className="space-y-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
             <p>
               This backup has {summary.recipes} recipes, {summary.lists} lists, {summary.pantryStaples} pantry staples and{' '}
               {summary.aisleOverrides} aisle choices. Importing replaces everything on this device.
             </p>
             <div className="flex gap-2">
-              <button type="button" onClick={() => void onConfirmImport()} className="rounded bg-amber-700 px-3 py-1 text-white">Replace my data</button>
+              <button type="button" onClick={() => void importAction.run(pending)} disabled={importAction.pending} className="rounded bg-amber-700 px-3 py-1 text-white disabled:opacity-50">Replace my data</button>
               <button type="button" onClick={() => setPending(null)} className="rounded border border-amber-300 px-3 py-1">Cancel</button>
             </div>
           </div>
         )}
+        <ErrorNote message={exportAction.error ?? shareAction.error ?? fileAction.error ?? importAction.error ?? undoAction.error} />
         {message && <p role="status" className="text-sm text-slate-700">{message}</p>}
       </Section>
 
