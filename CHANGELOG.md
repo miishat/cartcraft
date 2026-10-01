@@ -4,6 +4,8 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-01
+
 ### Added
 - Domain core: ingredient line parser, unit-aware scaling and formatting, list merging, aisle classifier with a starter dictionary, recipe yield parsing and JSON-LD recipe extraction.
 - Local IndexedDB storage (Dexie) with seeded aisles, pantry staples and settings.
