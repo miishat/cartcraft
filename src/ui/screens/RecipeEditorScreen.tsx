@@ -1,8 +1,10 @@
+import { Link2 } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import type { IngredientLine } from '../../domain';
 import { newId } from '../../app/ids';
 import { deleteRecipe, draftLinesFromText, requestPersistence, saveRecipe } from '../../app/recipes';
+import { IMPORT_MESSAGES, importRecipeFromUrl, looksLikeUrl, type UrlImportResult } from '../../services/urlImport';
 import { ErrorNote } from '../components/ErrorNote';
 import { ReviewTable } from '../components/ReviewTable';
 import { useDb } from '../db';
@@ -12,10 +14,14 @@ import { useAsyncAction } from '../useAsyncAction';
 interface Props {
   makeId?: () => string;
   now?: () => number;
+  importRecipe?: (url: string) => Promise<UrlImportResult>;
 }
 
-/** Add (/recipes/new) or edit (/recipes/:id). Paste text, review parsed lines, set servings, save. */
-export function RecipeEditorScreen({ makeId = newId, now = Date.now }: Props) {
+/**
+ * Add (/recipes/new) or edit (/recipes/:id). Paste ingredients or a recipe link, review the
+ * parsed lines, set servings, save. A link that cannot be imported switches to paste mode.
+ */
+export function RecipeEditorScreen({ makeId = newId, now = Date.now, importRecipe = importRecipeFromUrl }: Props) {
   const { id } = useParams();
   const db = useDb();
   const navigate = useNavigate();
@@ -26,9 +32,11 @@ export function RecipeEditorScreen({ makeId = newId, now = Date.now }: Props) {
   const [rawText, setRawText] = useState('');
   const [title, setTitle] = useState('');
   const [servings, setServings] = useState<string>('');
+  const [servingsGuessed, setServingsGuessed] = useState(false);
   const [lines, setLines] = useState<IngredientLine[] | null>(null);
   const [sourceUrl, setSourceUrl] = useState<string | undefined>();
   const [yieldText, setYieldText] = useState<string | undefined>();
+  const [importNote, setImportNote] = useState<string | null>(null);
 
   useEffect(() => {
     if (id === undefined) return;
@@ -47,10 +55,36 @@ export function RecipeEditorScreen({ makeId = newId, now = Date.now }: Props) {
     });
   }, [db, id]);
 
+  const isLink = looksLikeUrl(rawText);
+
   const parse = () => {
+    setImportNote(null);
     setLines(draftLinesFromText(rawText, makeId));
     if (!servings) setServings(String(settings.defaultServings));
   };
+
+  const importLink = useAsyncAction(async (url: string) => {
+    setImportNote(null);
+    const result = await importRecipe(url);
+    if (!result.ok) {
+      const { message, pasteInstead } = IMPORT_MESSAGES[result.error];
+      setImportNote(message);
+      if (pasteInstead) {
+        setSourceUrl(url.trim());
+        setRawText('');
+      }
+      return;
+    }
+    const { recipe } = result;
+    const text = recipe.ingredients.join('\n');
+    setTitle((current) => current || recipe.title);
+    setSourceUrl(recipe.sourceUrl);
+    setYieldText(recipe.yieldText);
+    setServings(String(recipe.servings ?? settings.defaultServings));
+    setServingsGuessed(recipe.servings === undefined);
+    setRawText(text);
+    setLines(draftLinesFromText(text, makeId));
+  }, 'Could not import that link. Paste the ingredients instead.');
 
   const baseServings = Number(servings);
   const canSave = lines !== null && title.trim() !== '' && Number.isFinite(baseServings) && baseServings > 0;
@@ -105,21 +139,44 @@ export function RecipeEditorScreen({ makeId = newId, now = Date.now }: Props) {
 
       <section className="space-y-2">
         <label htmlFor="raw" className="block text-sm font-medium text-slate-700">Ingredients</label>
+        <p className="text-xs text-slate-500">Paste the ingredient list, or a link to a recipe page.</p>
         <textarea
           id="raw"
           className="h-40 w-full rounded-xl border border-slate-200 p-3 font-mono text-sm"
-          placeholder={'2 cups flour\n3 eggs\nSalt, to taste'}
+          placeholder={'https://www.example.com/recipes/tacos\n\nor\n\n2 cups flour\n3 eggs\nSalt, to taste'}
           value={rawText}
           onChange={(e) => setRawText(e.target.value)}
         />
-        <button
-          type="button"
-          onClick={parse}
-          disabled={!rawText.trim()}
-          className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
-        >
-          {lines ? 'Parse again' : 'Parse ingredients'}
-        </button>
+        {isLink ? (
+          <button
+            type="button"
+            onClick={() => void importLink.run(rawText)}
+            disabled={importLink.pending}
+            className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
+          >
+            <Link2 size={16} /> {importLink.pending ? 'Importing...' : 'Import from link'}
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={parse}
+            disabled={!rawText.trim()}
+            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
+          >
+            {lines ? 'Parse again' : 'Parse ingredients'}
+          </button>
+        )}
+        <ErrorNote message={importNote ?? importLink.error} />
+        {sourceUrl && (
+          <p className="truncate text-xs text-slate-500">
+            Source:{' '}
+            {/^https?:\/\//i.test(sourceUrl) ? (
+              <a href={sourceUrl} target="_blank" rel="noreferrer noopener" className="underline">{sourceUrl}</a>
+            ) : (
+              sourceUrl
+            )}
+          </p>
+        )}
       </section>
 
       {lines && (
@@ -137,10 +194,18 @@ export function RecipeEditorScreen({ makeId = newId, now = Date.now }: Props) {
                 min={1}
                 inputMode="numeric"
                 value={servings}
-                onChange={(e) => setServings(e.target.value)}
+                onChange={(e) => {
+                  setServings(e.target.value);
+                  setServingsGuessed(false);
+                }}
               />
             </label>
           </section>
+          {servingsGuessed && (
+            <p role="status" className="text-sm text-amber-800">
+              The page did not say how many servings it makes{yieldText ? ` (it says "${yieldText}")` : ''}. Check base servings.
+            </p>
+          )}
 
           <section className="space-y-2">
             <h2 className="text-sm font-medium text-slate-700">Review ({lines.length} lines)</h2>
