@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router';
 import type { IngredientLine } from '../../domain';
 import { newId } from '../../app/ids';
 import { deleteRecipe, draftLinesFromText, requestPersistence, saveRecipe } from '../../app/recipes';
@@ -20,6 +20,7 @@ export function RecipeEditorScreen({ makeId = newId, now = Date.now }: Props) {
   const settings = useSettings();
 
   const [loaded, setLoaded] = useState(id === undefined);
+  const [missing, setMissing] = useState(false);
   const [rawText, setRawText] = useState('');
   const [title, setTitle] = useState('');
   const [servings, setServings] = useState<string>('');
@@ -38,6 +39,8 @@ export function RecipeEditorScreen({ makeId = newId, now = Date.now }: Props) {
         setLines(recipe.ingredients);
         setSourceUrl(recipe.sourceUrl);
         setYieldText(recipe.yieldText);
+      } else {
+        setMissing(true);
       }
       setLoaded(true);
     });
@@ -85,6 +88,14 @@ export function RecipeEditorScreen({ makeId = newId, now = Date.now }: Props) {
   };
 
   if (!loaded) return null;
+  if (missing) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-3">
+        <p className="text-slate-500">Recipe not found.</p>
+        <Link to="/" className="text-sm font-medium text-emerald-800">Back to recipes</Link>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={onSave} className="mx-auto max-w-2xl space-y-6">

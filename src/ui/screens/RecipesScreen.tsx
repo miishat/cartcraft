@@ -22,6 +22,7 @@ export function RecipesScreen({ makeId = newId, now = Date.now }: Props) {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<Map<string, number>>(new Map());
   const [building, setBuilding] = useState(false);
+  const [buildError, setBuildError] = useState<string | null>(null);
 
   if (!recipes) return null;
 
@@ -42,6 +43,7 @@ export function RecipesScreen({ makeId = newId, now = Date.now }: Props) {
 
   const build = async () => {
     setBuilding(true);
+    setBuildError(null);
     try {
       const listId = await createList(
         db,
@@ -50,6 +52,8 @@ export function RecipesScreen({ makeId = newId, now = Date.now }: Props) {
         makeId,
       );
       navigate(`/lists/${listId}`);
+    } catch {
+      setBuildError('Could not build the list. Try again.');
     } finally {
       setBuilding(false);
     }
@@ -121,7 +125,8 @@ export function RecipesScreen({ makeId = newId, now = Date.now }: Props) {
       )}
 
       {selected.size > 0 && (
-        <div className="fixed inset-x-0 bottom-20 flex justify-center px-4 md:bottom-6">
+        <div className="fixed inset-x-0 bottom-20 flex flex-col items-center gap-2 px-4 md:bottom-6">
+          {buildError && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 shadow">{buildError}</p>}
           <button
             type="button"
             onClick={() => void build()}

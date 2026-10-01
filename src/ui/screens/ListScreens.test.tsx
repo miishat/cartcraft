@@ -36,6 +36,11 @@ describe('ListsScreen', () => {
 });
 
 describe('ListScreen', () => {
+  it('shows a not-found message for a missing list', async () => {
+    renderRoutes(routes, '/lists/missing', createTestDb());
+    expect(await screen.findByText('List not found.')).toBeInTheDocument();
+  });
+
   it('groups items by aisle with a pantry section', async () => {
     const { db, listId } = await seededList();
     renderRoutes(routes, `/lists/${listId}`, db);

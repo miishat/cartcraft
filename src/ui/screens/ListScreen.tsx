@@ -24,7 +24,7 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000 }: Pr
   const db = useDb();
   const settings = useSettings();
   const aisles = useAisles();
-  const list = useLiveQuery(() => db.lists.get(id), [db, id]);
+  const list = useLiveQuery(async () => (await db.lists.get(id)) ?? null, [db, id]);
   const [adhoc, setAdhoc] = useState('');
   const [undo, setUndo] = useState<ListItem | null>(null);
   const [copied, setCopied] = useState(false);

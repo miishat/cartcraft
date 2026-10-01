@@ -40,6 +40,14 @@ describe('RecipeEditorScreen', () => {
     expect(screen.getByRole('button', { name: 'Save recipe' })).toBeDisabled();
   });
 
+  it('shows a not-found message for a missing recipe instead of the form', async () => {
+    renderRoutes(routes(), '/recipes/missing', createTestDb());
+    expect(await screen.findByText('Recipe not found.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /recipes/i })).toHaveAttribute('href', '/');
+    expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Edit recipe')).not.toBeInTheDocument();
+  });
+
   it('loads an existing recipe for editing and deletes it', async () => {
     const db = createTestDb();
     const ids = sequentialIds('r');

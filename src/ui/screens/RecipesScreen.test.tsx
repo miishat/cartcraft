@@ -32,6 +32,18 @@ describe('RecipesScreen', () => {
     expect(screen.getByText('Soup')).toBeInTheDocument();
   });
 
+  it('shows an alert and stays put when building the list fails', async () => {
+    const db = createTestDb();
+    const id = await addRecipe(db, 'Tacos', '1 cup milk');
+    const { user } = renderRoutes(routes, '/', db);
+    await user.click(await screen.findByRole('button', { name: 'Select Tacos' }));
+    await db.recipes.delete(id);
+    await user.click(screen.getByRole('button', { name: 'Build list (1)' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not build the list. Try again.');
+    expect(screen.getByTestId('location').textContent).toBe('/');
+    expect(screen.getByRole('button', { name: 'Build list (1)' })).toBeEnabled();
+  });
+
   it('builds a list from selected recipes with per-recipe servings', async () => {
     const db = createTestDb();
     await addRecipe(db, 'Tacos', '1 cup milk');
