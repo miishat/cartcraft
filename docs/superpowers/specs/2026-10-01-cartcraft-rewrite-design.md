@@ -135,16 +135,16 @@ Pipeline: normalize -> amount -> unit -> package size -> size word -> item/notes
 - Unit: alias table. `T`/`Tbsp`/`tbsp.` = tbsp, `t`/`tsp` = tsp. `oz` = mass, `fl oz` = volume. Size words (`small`, `medium`, `large`) are never units. A unit word must be followed by more text to count as a unit ("1 tsp ground cloves": unit tsp, item "ground cloves").
 - Package size: "1 (14 oz) can", "2 14-ounce cans" -> `packageSize`.
 - Parenthetical conversions such as "1 cup (240 ml) milk" go to notes.
-- Item/notes split at the first comma or recognized prep phrase; "or X" and "(or X)" go to `alternatives`.
+- Item/notes split at the first comma; "or X" and "(or X)" go to `alternatives`.
 - "to taste", "pinch", "dash", "as needed" -> `scalable: false`.
 - "For the sauce:" style lines -> `isHeader: true`.
 - Anything not understood stays in `notes`, and `needsReview` is set. No text is ever lost.
 
-Library spike: in the first task, run the checklist cases in 10.1 against `parse-ingredient` (MIT). If it handles the amount and unit cases with `round: false`, use it as the amount/unit front end with a CartCraft layer on top. Otherwise implement amount/unit parsing in-house on top of `numeric-quantity`.
+Library decision (spike run 2026-10-01): `parse-ingredient` 3.0.0 failed "1 and 1/2", package sizes, "1 lb 2 oz", "large" (treated as a unit), "a pinch of" and decimal commas, and rounds by default. Amount and unit parsing is implemented in-house on top of `numeric-quantity` with rounding disabled.
 
 ### 5.2 Normalize: `itemKey(item): string`
 
-Lowercase, trim, singularize the last word (`pluralize`, MIT), apply the built-in alias map (e.g. "scallion" -> "green onion"). No fuzzy matching: "red onion", "green onion" and "onion" are different keys. "Juice of 2 lemons" becomes item "lemon" with note "juice".
+Lowercase, drop leading size, freshness and prep words (fresh, freshly, ripe, whole, small, medium, large, minced, chopped, sliced, grated, shredded, peeled, softened, melted, finely, thinly, roughly, coarsely), singularize the last word (`pluralize`, MIT), apply the built-in alias map (e.g. "scallion" -> "green onion"). "diced" and "crushed" are kept because they name canned products. No fuzzy matching: "red onion", "green onion" and "onion" are different keys. "Juice of 2 lemons" becomes item "lemon" with note "juice".
 
 ### 5.3 Scale: `scaleLine(line, base, target): IngredientLine`
 
@@ -152,7 +152,7 @@ Multiply `quantity.min`/`max` by `target / base`. Never scale `packageSize`, num
 
 ### 5.4 Merge: `buildListItems(selections, ctx): ListItem[]`
 
-Input: selected recipes with target servings, pantry staples, aisle lookup, unit system.
+Input: selected recipes with base and target servings, plus a context of pantry staples, an aisle classifier and an id generator. The unit system is applied only at display time (5.5).
 
 1. Skip header lines. Scale each line.
 2. Group by `itemKey`.
@@ -166,8 +166,9 @@ Input: selected recipes with target servings, pantry staples, aisle lookup, unit
 
 - Volume, US: choose the largest of cup, tbsp, tsp where the value is at least 1, snap to the nearest 1/8 or 1/3 ("6 tbsp", "1 1/2 cups"). Values under 1/8 tsp display as "pinch".
 - Mass, US: oz under 16 oz, lb at or above, snapped to 1/4.
-- Metric: g under 1000 then kg; mL under 1000 then L. One decimal at most for kg/L, whole numbers for g/mL.
+- Metric: g under 1000 then kg; mL under 1000 then L. At most two decimals for kg/L ("1.25 kg"), whole numbers for g/mL (one decimal under 10).
 - Count units and packaged units round up for display ("4.5 eggs" -> "5", "0.5 can" -> "1 can (14 oz)").
+- Package sizes read as printed on the label ("28 oz", not "1 3/4 lb") and are converted only when the label uses the other unit system.
 - Ranges display as "3-4 cloves".
 - Multiple amounts join with " + ".
 
@@ -175,7 +176,7 @@ Unit constants: US cup 236.588 mL, US tbsp 14.787 mL, US tsp 4.929 mL, fl oz 29.
 
 ### 5.6 Aisle: `classifyAisle(itemKey, overrides, dictionary): aisleId`
 
-Order: user/LLM override -> built-in dictionary (exact key, then last-word match, e.g. "smoked paprika" -> "paprika") -> `other`.
+Order: user/LLM override -> built-in dictionary (exact key, then longest matching suffix, e.g. "smoked paprika" -> "paprika", then longest matching prefix, e.g. "chicken thigh" -> "chicken") -> `other`.
 
 Default aisles, in order: Produce, Meat & Seafood, Dairy & Eggs, Bakery, Pantry & Dry Goods, Canned & Jarred, Spices & Oils, Frozen, Beverages, Household, Other.
 
