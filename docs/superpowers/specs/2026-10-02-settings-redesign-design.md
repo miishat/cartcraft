@@ -43,9 +43,11 @@ Each sub-page starts with a back link "‹ Settings" (to `/settings`), then the 
 | `/settings/pantry` | Pantry staples | Hint "These go in a "Check pantry" section instead of an aisle." A card of chips (remove button "Remove <staple>"), then the add form (input "New pantry staple", button "Add"). |
 | `/settings/ai` | AI helper | The existing `AiSettings` behavior restyled: intro hint; Provider as a tick list in a card (radio inputs, group label "Provider"); Model field (label "Model"); key card ("Key saved for <Provider>" with "Remove key", or the API key input with "Save key"); "Test connection" button; mismatch warning; status and errors. |
 | `/settings/backup` | Backup and restore | Hint about data living on this device and the AI key never being included. One card of action rows with badges: Export backup (⬇️), Share backup (📤, only when sharing files works), Import from file (📂, a file input labelled "Import"), Paste a backup (📋, toggles the paste box), Undo last import (↩️, only when available). Below: paste box, "replace everything?" confirm, messages and errors, all as today. |
-| `/settings/storage` | Storage | One card: "Used" with the size, "Protected" with the persist status sentence, "Version" with the app version. |
+| `/settings/storage` | Storage | One card: "Used" with the size, "Protection" with the persist status sentence, "Version" with the app version. |
 
 Unknown `/settings/*` paths fall through to the existing catch-all redirect.
+
+The "Add an AI key in Settings" links on the list and recipe editor screens go straight to `/settings/ai`.
 
 ### Aisle reordering
 
@@ -115,6 +117,6 @@ Unchanged per action: each page keeps its own `useAsyncAction` and shows `ErrorN
 
 - No em dashes in code comments, docs or UI copy.
 - No hex colors or arbitrary color values in JSX; use the slate, emerald, amber, red ramps and `tint-*` tokens.
-- CSP `style-src 'self'`: no `<style>` tags or inline style attributes in static HTML. React `style` is allowed only for the drag offset of the row being dragged.
+- CSP `style-src 'self'`: no `<style>` tags or inline style attributes in static HTML. React `style` is allowed only for the drag offsets of aisle rows while dragging (the dragged row and the rows that slide out of its way).
 - Emoji and badges are decorative (`aria-hidden="true"`).
 - UI test files start with `// @vitest-environment jsdom`.
