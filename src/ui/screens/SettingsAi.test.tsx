@@ -35,7 +35,7 @@ describe('SettingsScreen: AI helper', () => {
 
     await user.type(within(section).getByLabelText('API key'), 'sk-secret-123');
     await user.click(within(section).getByRole('button', { name: 'Save key' }));
-    expect(await within(section).findByText('Key saved on this device.')).toBeInTheDocument();
+    expect(await within(section).findByText('Key saved for OpenRouter.')).toBeInTheDocument();
     expect((await db.secrets.get('secrets'))?.llmApiKey).toBe('sk-secret-123');
     expect(serializeBackup(await exportBackup(db, 1))).not.toContain('sk-secret-123');
   });
@@ -60,6 +60,30 @@ describe('SettingsScreen: AI helper', () => {
     expect(url).toBe('https://api.deepseek.com/chat/completions');
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer sk-try');
     expect(await db.secrets.get('secrets')).toBeUndefined();
+  });
+
+  it('shows which provider the key is for and refuses it for another provider', async () => {
+    const fetchMock = stubProvider({ ok: true });
+    const db = createTestDb();
+    await saveAiKey(db, 'sk-ds');
+    const { user } = renderRoutes(routes, '/settings', db);
+    const section = await screen.findByRole('region', { name: 'AI helper' });
+    expect(await within(section).findByText('Key saved for DeepSeek.')).toBeInTheDocument();
+    await user.selectOptions(within(section).getByLabelText('Provider'), 'openai');
+    expect(await within(section).findByText(/will not be used with OpenAI/)).toBeInTheDocument();
+    expect(within(section).getByRole('button', { name: 'Test connection' })).toBeDisabled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('clears the connection message when the provider changes', async () => {
+    stubProvider({ ok: true });
+    const { user } = renderRoutes(routes, '/settings');
+    const section = await screen.findByRole('region', { name: 'AI helper' });
+    await user.type(within(section).getByLabelText('API key'), 'sk-try');
+    await user.click(within(section).getByRole('button', { name: 'Test connection' }));
+    expect(await within(section).findByText('Connection works.')).toBeInTheDocument();
+    await user.selectOptions(within(section).getByLabelText('Provider'), 'groq');
+    await waitFor(() => expect(within(section).queryByText('Connection works.')).not.toBeInTheDocument());
   });
 
   it('explains a rejected key', async () => {

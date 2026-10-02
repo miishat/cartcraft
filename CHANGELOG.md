@@ -5,6 +5,7 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 ## [Unreleased]
 
 ### Added
+- The AI key is used only with the provider it was saved for.
 - Shopping lists can ask AI to sort items left in Other into aisles (remembered for next time, never overriding your own choices) and to suggest swaps and leftover tips.
 - "Clean up with AI" turns messy pasted recipes into ingredient lines, and "Try with AI" reads pages that have no recipe data. Every AI line goes through the normal review, and numbers that are not in the source are flagged.
 - Optional AI helper in Settings: choose DeepSeek, OpenRouter, OpenAI or Groq, enter your own key (kept on this device, never included in backups) and test the connection.

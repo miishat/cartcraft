@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useState } from 'react';
-import { clearAiKey, saveAiKey, testAiConnection } from '../../app/ai';
+import { clearAiKey, getAiKeyStatus, saveAiKey, testAiConnection } from '../../app/ai';
 import { updateSettings } from '../../data/db';
 import { PROVIDERS, getProvider } from '../../services/providers';
 import { useDb } from '../db';
@@ -12,13 +12,16 @@ import { ErrorNote } from './ErrorNote';
 export function AiSettings() {
   const db = useDb();
   const settings = useSettings();
-  const hasKey = useLiveQuery(async () => Boolean((await db.secrets.get('secrets'))?.llmApiKey), [db]);
+  const keyStatus = useLiveQuery(() => getAiKeyStatus(db), [db]);
+  const hasKey = Boolean(keyStatus?.savedFor);
+  const keyMismatch = hasKey && keyStatus?.usableKey === null;
   const provider = getProvider(settings.llm.providerId);
   const [model, setModel] = useState(settings.llm.model);
   const [keyDraft, setKeyDraft] = useState('');
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => setModel(settings.llm.model), [settings.llm.model]);
+  useEffect(() => setMessage(null), [settings.llm.providerId, settings.llm.model, model, keyDraft, keyStatus?.usableKey]);
 
   const save = useAsyncAction((fn: () => Promise<void>) => {
     test.clearError();
@@ -27,7 +30,7 @@ export function AiSettings() {
   const test = useAsyncAction(async () => {
     save.clearError();
     setMessage(null);
-    const apiKey = keyDraft.trim() || (await db.secrets.get('secrets'))?.llmApiKey || '';
+    const apiKey = keyDraft.trim() || (await getAiKeyStatus(db)).usableKey || '';
     await testAiConnection({ providerId: provider.id, model, apiKey });
     setMessage('Connection works.');
   }, 'The connection test failed.');
@@ -60,7 +63,7 @@ export function AiSettings() {
       </label>
       {hasKey ? (
         <div className="flex items-center gap-3 text-sm">
-          <span className="text-emerald-800">Key saved on this device.</span>
+          <span className={keyMismatch ? 'text-slate-700' : 'text-emerald-800'}>Key saved for {getProvider(keyStatus?.savedFor ?? '').name}.</span>
           <button type="button" onClick={() => void save.run(() => clearAiKey(db))} className="font-medium text-red-700">Remove key</button>
         </div>
       ) : (
@@ -90,11 +93,16 @@ export function AiSettings() {
       <button
         type="button"
         onClick={() => void test.run()}
-        disabled={test.pending || (!hasKey && !keyDraft.trim())}
+        disabled={test.pending || (!keyStatus?.usableKey && !keyDraft.trim())}
         className="rounded border border-slate-300 px-3 py-1 text-sm disabled:opacity-40"
       >
         {test.pending ? 'Testing...' : 'Test connection'}
       </button>
+      {keyMismatch && (
+        <p className="text-sm text-amber-800">
+          This key will not be used with {provider.name}. Remove it to add a {provider.name} key, or switch back to {getProvider(keyStatus?.savedFor ?? '').name}.
+        </p>
+      )}
       <ErrorNote message={save.error ?? test.error} />
       {message && <p role="status" className="text-sm text-emerald-800">{message}</p>}
     </div>

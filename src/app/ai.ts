@@ -17,18 +17,40 @@ export class AiNotConfiguredError extends UserFacingError {
 export async function saveAiKey(db: CartCraftDb, apiKey: string): Promise<void> {
   const key = apiKey.trim();
   if (!key) throw new UserFacingError('Enter a key first.');
-  await db.secrets.put({ id: 'secrets', llmApiKey: key });
+  const { llm } = await getSettings(db);
+  await db.secrets.put({ id: 'secrets', llmApiKey: key, llmKeyProviderId: getProvider(llm.providerId).id });
 }
 
 export async function clearAiKey(db: CartCraftDb): Promise<void> {
   await db.secrets.delete('secrets');
 }
 
-/** Provider, model and key, or null when no key is saved. */
-export async function getLlmConfig(db: CartCraftDb): Promise<LlmConfig | null> {
+export interface AiKeyStatus {
+  /** Provider the saved key belongs to, or null when no key is saved. */
+  savedFor: string | null;
+  /** The saved key, only when it belongs to the selected provider. */
+  usableKey: string | null;
+}
+
+/** A key saved before providers were tracked is taken to belong to the selected provider. */
+export async function getAiKeyStatus(db: CartCraftDb): Promise<AiKeyStatus> {
   const [settings, secrets] = await Promise.all([getSettings(db), db.secrets.get('secrets')]);
-  if (!secrets?.llmApiKey) return null;
-  return { provider: getProvider(settings.llm.providerId), model: settings.llm.model, apiKey: secrets.llmApiKey };
+  if (!secrets?.llmApiKey) return { savedFor: null, usableKey: null };
+  const selected = getProvider(settings.llm.providerId).id;
+  const savedFor = secrets.llmKeyProviderId ?? selected;
+  return { savedFor, usableKey: savedFor === selected ? secrets.llmApiKey : null };
+}
+
+/** True when a key is saved for the selected provider. */
+export async function hasUsableAiKey(db: CartCraftDb): Promise<boolean> {
+  return (await getAiKeyStatus(db)).usableKey !== null;
+}
+
+/** Provider, model and key, or null when no key is saved for the selected provider. */
+export async function getLlmConfig(db: CartCraftDb): Promise<LlmConfig | null> {
+  const [settings, { usableKey }] = await Promise.all([getSettings(db), getAiKeyStatus(db)]);
+  if (!usableKey) return null;
+  return { provider: getProvider(settings.llm.providerId), model: settings.llm.model, apiKey: usableKey };
 }
 
 async function requireConfig(db: CartCraftDb): Promise<LlmConfig> {

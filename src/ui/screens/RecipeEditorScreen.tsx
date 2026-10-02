@@ -3,7 +3,7 @@ import { Link2, Sparkles } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import type { IngredientLine } from '../../domain';
-import { aiCleanUpText, type AiDraft } from '../../app/ai';
+import { aiCleanUpText, hasUsableAiKey, type AiDraft } from '../../app/ai';
 import { newId } from '../../app/ids';
 import { deleteRecipe, draftLinesFromText, requestPersistence, saveRecipe } from '../../app/recipes';
 import {
@@ -40,7 +40,7 @@ export function RecipeEditorScreen({
   const db = useDb();
   const navigate = useNavigate();
   const settings = useSettings();
-  const hasAi = useLiveQuery(async () => Boolean((await db.secrets.get('secrets'))?.llmApiKey), [db]) ?? false;
+  const hasAi = useLiveQuery(() => hasUsableAiKey(db), [db]) ?? false;
   const runCleanUp = cleanUp ?? ((text: string) => aiCleanUpText(db, text, makeId));
 
   const [loaded, setLoaded] = useState(id === undefined);

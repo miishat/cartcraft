@@ -3,8 +3,9 @@ import { updateSettings, type CartCraftDb } from '../data/db';
 import { createTestDb, sequentialIds } from '../test/db';
 import {
   AiNotConfiguredError, aiCleanUpText, aiSortUnknownItems, aiSwapsAndTips, clearAiKey, getLlmConfig,
-  hasInventedNumber, saveAiKey, testAiConnection,
+  hasInventedNumber, hasUsableAiKey, saveAiKey, testAiConnection,
 } from './ai';
+import { exportBackup, serializeBackup } from '../data/backup';
 import { addAdhocItem, createList } from './lists';
 import { draftLinesFromText, saveRecipe } from './recipes';
 
@@ -26,14 +27,46 @@ async function listWith(db: CartCraftDb, text: string): Promise<string> {
 
 describe('AI key and config', () => {
   it('saves, reads and clears the key with the selected provider', async () => {
-    const db = await configured();
+    const db = createTestDb();
     await updateSettings(db, { llm: { providerId: 'groq', model: 'custom' } });
+    await saveAiKey(db, ' sk-test ');
     const config = await getLlmConfig(db);
     expect(config?.provider.id).toBe('groq');
     expect(config?.model).toBe('custom');
     expect(config?.apiKey).toBe('sk-test');
     await clearAiKey(db);
     expect(await getLlmConfig(db)).toBeNull();
+  });
+
+  it('uses the saved key only with the provider it was saved for', async () => {
+    const db = await configured();
+    expect((await db.secrets.get('secrets'))?.llmKeyProviderId).toBe('deepseek');
+    expect(await hasUsableAiKey(db)).toBe(true);
+    await updateSettings(db, { llm: { providerId: 'openai', model: '' } });
+    expect(await getLlmConfig(db)).toBeNull();
+    expect(await hasUsableAiKey(db)).toBe(false);
+    const fetchImpl = reply({ swaps: [], tips: [] });
+    const listId = await listWith(db, '2 onions');
+    await expect(aiSwapsAndTips(db, listId, 1, fetchImpl)).rejects.toBeInstanceOf(AiNotConfiguredError);
+    expect(fetchImpl).not.toHaveBeenCalled();
+    await updateSettings(db, { llm: { providerId: 'deepseek', model: '' } });
+    expect((await getLlmConfig(db))?.apiKey).toBe('sk-test');
+    expect(await hasUsableAiKey(db)).toBe(true);
+  });
+
+  it('treats a key saved before providers were tracked as belonging to the selected provider', async () => {
+    const db = createTestDb();
+    await db.secrets.put({ id: 'secrets', llmApiKey: 'sk-old' });
+    await updateSettings(db, { llm: { providerId: 'groq', model: '' } });
+    expect((await getLlmConfig(db))?.apiKey).toBe('sk-old');
+    expect(await hasUsableAiKey(db)).toBe(true);
+  });
+
+  it('never exports the key or its provider', async () => {
+    const db = await configured();
+    const text = serializeBackup(await exportBackup(db, 1));
+    expect(text).not.toContain('sk-test');
+    expect(text).not.toContain('llmKeyProviderId');
   });
 
   it('rejects a blank key', async () => {

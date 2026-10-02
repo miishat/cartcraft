@@ -3,7 +3,7 @@ import { Copy, Pencil, Plus, Sparkles } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router';
 import type { ListItem } from '../../domain';
-import { aiSortUnknownItems, aiSwapsAndTips } from '../../app/ai';
+import { aiSortUnknownItems, aiSwapsAndTips, hasUsableAiKey } from '../../app/ai';
 import { newId } from '../../app/ids';
 import {
   addAdhocItem, deleteItem, editItem, moveItemToAisle, renameList, setItemChecked,
@@ -31,7 +31,7 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
   const settings = useSettings();
   const aisles = useAisles();
   const list = useLiveQuery(async () => (await db.lists.get(id)) ?? null, [db, id]);
-  const hasAi = useLiveQuery(async () => Boolean((await db.secrets.get('secrets'))?.llmApiKey), [db]) ?? false;
+  const hasAi = useLiveQuery(() => hasUsableAiKey(db), [db]) ?? false;
   const [aiNote, setAiNote] = useState<string | null>(null);
   const [adhoc, setAdhoc] = useState('');
   const [undo, setUndo] = useState<ListItem | null>(null);
