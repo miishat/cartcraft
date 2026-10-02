@@ -207,7 +207,7 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
       {aiNote && <p role="status" className="text-sm text-slate-700">{aiNote}</p>}
 
       {view.aisles.length > 1 && (
-        <div role="group" aria-label="Filter by aisle" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+        <div role="group" aria-label="Filter by aisle" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <button type="button" aria-pressed={!filtered} aria-label="Show all aisles" onClick={() => setAisleFilter(null)} className={pill(!filtered)}>
             All <span className="tabular-nums">{leftCount}</span>
           </button>
@@ -311,7 +311,7 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
       )}
 
       {undo && (
-        <div role="status" className="fixed inset-x-0 bottom-[calc(8rem+env(safe-area-inset-bottom))] mx-auto flex w-fit items-center gap-4 rounded-full bg-slate-900 px-4 py-2 text-sm text-white shadow-lg md:bottom-24">
+        <div role="status" className="fixed inset-x-0 bottom-[calc(9.25rem+env(safe-area-inset-bottom))] mx-auto flex w-fit items-center gap-4 rounded-full bg-slate-900 px-4 py-2 text-sm text-white shadow-lg md:bottom-28">
           Checked {undo.name}
           <button type="button" onClick={() => void undoCheck()} className="font-semibold text-emerald-300">Undo</button>
         </div>
