@@ -37,6 +37,35 @@ describe('ListsScreen', () => {
 });
 
 describe('ListScreen', () => {
+  it('shows an icon badge on every aisle section and the pantry section', async () => {
+    const { db, listId } = await seededList();
+    renderRoutes(routes, `/lists/${listId}`, db);
+    for (const name of ['Produce', 'Dairy & Eggs', 'Check pantry']) {
+      const region = await screen.findByRole('region', { name });
+      expect(region.querySelector('[data-aisle-badge] svg')).not.toBeNull();
+    }
+  });
+
+  it('filters to one aisle and back', async () => {
+    const { db, listId } = await seededList();
+    const { user } = renderRoutes(routes, `/lists/${listId}`, db);
+    await user.click(await screen.findByRole('button', { name: 'Show only Produce' }));
+    expect(screen.getByRole('button', { name: 'Show only Produce' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('region', { name: 'Produce' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Dairy & Eggs' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Check pantry' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Show all aisles' }));
+    expect(screen.getByRole('region', { name: 'Dairy & Eggs' })).toBeInTheDocument();
+  });
+
+  it('goes back to all aisles when the filtered aisle runs out', async () => {
+    const { db, listId } = await seededList();
+    const { user } = renderRoutes(routes, `/lists/${listId}`, db);
+    await user.click(await screen.findByRole('button', { name: 'Show only Produce' }));
+    await user.click(screen.getByRole('button', { name: 'Onions: 2' }));
+    expect(await screen.findByRole('region', { name: 'Dairy & Eggs' })).toBeInTheDocument();
+  });
+
   it('shows shopping progress that follows checked items', async () => {
     const { db, listId } = await seededList();
     const { user } = renderRoutes(routes, `/lists/${listId}`, db);

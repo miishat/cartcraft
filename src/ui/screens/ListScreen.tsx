@@ -10,7 +10,8 @@ import {
 } from '../../app/lists';
 import { groupListItems, listAsText } from '../../app/listView';
 import { updateSettings } from '../../data/db';
-import { PANTRY_CHECK_ID, aisleIcon } from '../aisleIcons';
+import { PANTRY_CHECK_ID } from '../aisleIcons';
+import { AisleBadge } from '../components/AisleBadge';
 import { ErrorNote } from '../components/ErrorNote';
 import { PromptDialog } from '../components/Dialog';
 import { ProgressBar } from '../components/ProgressBar';
@@ -20,7 +21,10 @@ import { useAisles, useSettings } from '../hooks';
 import { useAsyncAction } from '../useAsyncAction';
 import { useWakeLock, wakeLockSupported } from '../useWakeLock';
 
-const SECTION_HEADING = 'mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500';
+const CARD = 'overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200';
+const CARD_HEADING = 'flex items-center gap-2.5 px-3 pb-1 pt-3 text-sm font-semibold text-slate-900';
+const pill = (on: boolean) =>
+  `inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold ${on ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200'}`;
 
 interface Props {
   makeId?: () => string;
@@ -44,6 +48,7 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
   const [undo, setUndo] = useState<ListItem | null>(null);
   const [copied, setCopied] = useState(false);
   const [renaming, setRenaming] = useState(false);
+  const [aisleFilter, setAisleFilter] = useState<string | null>(null);
   const [canWakeLock] = useState(wakeLockSupported);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -88,7 +93,10 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
   if (list === null) return <p className="text-slate-500">List not found.</p>;
 
   const view = groupListItems(list.items, aisles);
-  const PantryIcon = aisleIcon(PANTRY_CHECK_ID);
+  // A filter whose aisle has run out falls back to showing everything.
+  const filtered = aisleFilter !== null && view.aisles.some((s) => s.id === aisleFilter);
+  const shownAisles = filtered ? view.aisles.filter((s) => s.id === aisleFilter) : view.aisles;
+  const leftCount = view.aisles.reduce((n, s) => n + s.items.length, 0);
   const unknownCount = new Set(list.items.filter((i) => !i.checked && i.group === 'aisle' && i.aisleId === 'other').map((i) => i.itemKey)).size;
 
   const toggle = (item: ListItem) =>
@@ -189,7 +197,7 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
             type="button"
             onClick={() => void sortAction.run()}
             disabled={!hasAi || sortAction.pending}
-            className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 disabled:opacity-40"
+            className="inline-flex items-center gap-1 rounded-xl bg-white px-3 py-1.5 ring-1 ring-slate-200 disabled:opacity-40"
           >
             <Sparkles size={14} /> {sortAction.pending ? 'Sorting...' : `Sort ${unknownCount} unknown ${unknownCount === 1 ? 'item' : 'items'} with AI`}
           </button>
@@ -198,7 +206,7 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
           type="button"
           onClick={() => void extrasAction.run()}
           disabled={!hasAi || extrasAction.pending || list.items.length === 0}
-          className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 disabled:opacity-40"
+          className="inline-flex items-center gap-1 rounded-xl bg-white px-3 py-1.5 ring-1 ring-slate-200 disabled:opacity-40"
         >
           <Sparkles size={14} /> {extrasAction.pending ? 'Thinking...' : list.extras ? 'Refresh swaps & tips' : 'Add swaps & tips'}
         </button>
@@ -211,26 +219,54 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
       <ErrorNote message={sortAction.error ?? extrasAction.error} />
       {aiNote && <p role="status" className="text-sm text-slate-700">{aiNote}</p>}
 
-      {view.aisles.map((section) => {
-        const Icon = aisleIcon(section.id);
-        return (
-          <section key={section.id} aria-label={section.title}>
-            <h2 className={SECTION_HEADING}><Icon size={16} className="text-emerald-700" /> {section.title}</h2>
-            <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200">{section.items.map(row)}</ul>
-          </section>
-        );
-      })}
+      {view.aisles.length > 1 && (
+        <div role="group" aria-label="Filter by aisle" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+          <button type="button" aria-pressed={!filtered} aria-label="Show all aisles" onClick={() => setAisleFilter(null)} className={pill(!filtered)}>
+            All <span className="tabular-nums">{leftCount}</span>
+          </button>
+          {view.aisles.map((section) => {
+            const on = filtered && aisleFilter === section.id;
+            return (
+              <button
+                key={section.id}
+                type="button"
+                aria-pressed={on}
+                aria-label={`Show only ${section.title}`}
+                onClick={() => setAisleFilter(section.id)}
+                className={pill(on)}
+              >
+                <AisleBadge aisleId={section.id} size="sm" /> {section.title} <span className="tabular-nums">{section.items.length}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-      {view.pantry.length > 0 && (
-        <section aria-label="Check pantry">
-          <h2 className={SECTION_HEADING}><PantryIcon size={16} className="text-emerald-700" /> Check pantry</h2>
-          <ul className="divide-y divide-slate-100 rounded-xl border border-dashed border-slate-300">{view.pantry.map(row)}</ul>
+      {shownAisles.map((section) => (
+        <section key={section.id} aria-label={section.title} className={CARD}>
+          <h2 className={CARD_HEADING}>
+            <AisleBadge aisleId={section.id} /> {section.title}
+            <span className="ml-auto text-xs font-normal text-slate-400">{section.items.length} left</span>
+          </h2>
+          <ul className="divide-y divide-slate-100">{section.items.map(row)}</ul>
+        </section>
+      ))}
+
+      {!filtered && view.pantry.length > 0 && (
+        <section aria-label="Check pantry" className="overflow-hidden rounded-2xl border border-dashed border-slate-300 bg-white">
+          <h2 className={CARD_HEADING}>
+            <AisleBadge aisleId={PANTRY_CHECK_ID} /> Check pantry
+            <span className="ml-auto text-xs font-normal text-slate-400">Have it already?</span>
+          </h2>
+          <ul className="divide-y divide-slate-100">{view.pantry.map(row)}</ul>
         </section>
       )}
 
-      {list.extras && (list.extras.swaps.length > 0 || list.extras.tips.length > 0) && (
-        <section aria-label="Swaps & tips" className="space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-          <h2 className="text-xs font-semibold uppercase tracking-wide">Swaps & tips (AI suggestions)</h2>
+      {!filtered && list.extras && (list.extras.swaps.length > 0 || list.extras.tips.length > 0) && (
+        <section aria-label="Swaps & tips" className="space-y-2 rounded-2xl bg-linear-to-br from-tint-purple-bg to-tint-amber-bg p-4 text-sm text-slate-700">
+          <h2 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-tint-purple-fg">
+            <Sparkles size={14} aria-hidden="true" /> Swaps & tips (AI suggestions)
+          </h2>
           {list.extras.swaps.length > 0 && (
             <ul className="space-y-1">
               {list.extras.swaps.map((s, i) => (
@@ -249,8 +285,8 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
       )}
 
       {view.inCart.length > 0 && (
-        <details className="rounded-xl border border-slate-200 bg-slate-50" aria-label="In cart">
-          <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-slate-600">In cart ({view.inCart.length})</summary>
+        <details className={CARD} aria-label="In cart">
+          <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-slate-600">In cart ({view.inCart.length})</summary>
           <ul className="divide-y divide-slate-100">{view.inCart.map(row)}</ul>
         </details>
       )}
