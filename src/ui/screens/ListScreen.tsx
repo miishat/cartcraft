@@ -9,11 +9,13 @@ import {
   addAdhocItem, deleteItem, editItem, moveItemToAisle, renameList, setItemChecked,
 } from '../../app/lists';
 import { groupListItems, listAsText } from '../../app/listView';
+import { updateSettings } from '../../data/db';
 import { ErrorNote } from '../components/ErrorNote';
 import { ListItemRow } from '../components/ListItemRow';
 import { useDb } from '../db';
 import { useAisles, useSettings } from '../hooks';
 import { useAsyncAction } from '../useAsyncAction';
+import { useWakeLock, wakeLockSupported } from '../useWakeLock';
 
 interface Props {
   makeId?: () => string;
@@ -36,8 +38,11 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
   const [adhoc, setAdhoc] = useState('');
   const [undo, setUndo] = useState<ListItem | null>(null);
   const [copied, setCopied] = useState(false);
+  const [canWakeLock] = useState(wakeLockSupported);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useWakeLock(settings.keepScreenOn);
 
   useEffect(
     () => () => {
@@ -147,6 +152,16 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
           </button>
         </div>
       </div>
+      {canWakeLock && (
+        <label className="flex w-fit items-center gap-2 text-sm text-slate-600">
+          <input
+            type="checkbox"
+            checked={settings.keepScreenOn}
+            onChange={(e) => void act.run(() => updateSettings(db, { keepScreenOn: e.target.checked }))}
+          />
+          Keep screen on
+        </label>
+      )}
       {copied && <p role="status" className="text-sm text-emerald-700">Copied to clipboard</p>}
       <ErrorNote message={act.error ?? copy.error} />
 
