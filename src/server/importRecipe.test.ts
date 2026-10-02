@@ -112,6 +112,11 @@ describe('handleImport', () => {
     expect(allow).toHaveBeenCalledWith('203.0.113.9', 0);
   });
 
+  it('waits for an async rate limiter', async () => {
+    const result = await call(post({ url: 'https://example.com/t' }), deps(vi.fn(), { allow: async () => false }));
+    expect(result.status).toBe(429);
+  });
+
   it.each([
     [() => html('denied', { status: 403 }), 'blocked'],
     [() => html('challenge', { status: 200, headers: { 'cf-mitigated': 'challenge', 'content-type': 'text/html' } }), 'blocked'],

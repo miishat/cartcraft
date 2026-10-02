@@ -1,10 +1,17 @@
-import { decodeEntities } from '../../src/domain';
-import { handleImport } from '../../src/server/importRecipe';
-import { limitBytes } from '../../src/server/limitBytes';
-import { createRateLimiter } from '../../src/server/rateLimit';
+import { decodeEntities } from '../src/domain';
+import { handleImport } from '../src/server/importRecipe';
+import { limitBytes } from '../src/server/limitBytes';
+import { createRateLimiter } from '../src/server/rateLimit';
 
-/** 10 imports per minute per client IP, per isolate (best effort; see spec section 7). */
-const allow = createRateLimiter({ limit: 10, windowMs: 60_000 });
+interface Env {
+  /** Static files from dist/ (the built app). */
+  ASSETS: Fetcher;
+  /** 10 imports per minute per client IP (wrangler.jsonc). Missing in some local setups. */
+  IMPORT_LIMITER?: RateLimit;
+}
+
+/** Used only when the rate-limit binding is missing: per isolate, best effort. */
+const fallbackLimiter = createRateLimiter({ limit: 10, windowMs: 60_000 });
 
 function limited(response: Response, maxBytes: number): Response {
   return new Response(response.body ? limitBytes(response.body, maxBytes) : null, { headers: response.headers });
@@ -69,11 +76,28 @@ async function visibleText(response: Response, maxBytes: number, maxChars: numbe
     .slice(0, maxChars);
 }
 
-export const onRequest: PagesFunction = ({ request }) =>
-  handleImport(request, {
-    fetch: (url, init) => fetch(url, init),
-    jsonLdBlocks,
-    visibleText,
-    allow,
-    now: Date.now,
+function notFound(): Response {
+  return new Response(JSON.stringify({ ok: false, error: 'bad_request' }), {
+    status: 404,
+    headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' },
   });
+}
+
+/**
+ * Only /api/* reaches this code (assets.run_worker_first in wrangler.jsonc); every other
+ * path is served from dist/ with the single-page-app fallback and the _headers rules.
+ */
+export default {
+  fetch(request, env) {
+    const { pathname } = new URL(request.url);
+    if (pathname !== '/api/import') return pathname.startsWith('/api/') ? notFound() : env.ASSETS.fetch(request);
+    return handleImport(request, {
+      fetch: (url, init) => fetch(url, init),
+      jsonLdBlocks,
+      visibleText,
+      allow: async (key, now) =>
+        env.IMPORT_LIMITER ? (await env.IMPORT_LIMITER.limit({ key })).success : fallbackLimiter(key, now),
+      now: Date.now,
+    });
+  },
+} satisfies ExportedHandler<Env>;

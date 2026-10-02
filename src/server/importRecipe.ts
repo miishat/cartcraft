@@ -23,8 +23,8 @@ export interface ImportDeps {
   jsonLdBlocks: (response: Response, maxBytes: number) => Promise<string[]>;
   /** Visible page text without scripts and styles, at most maxChars. Must throw TooLargeError past maxBytes. */
   visibleText: (response: Response, maxBytes: number, maxChars: number) => Promise<string>;
-  /** Rate limiter: false means reject. */
-  allow: (key: string, now: number) => boolean;
+  /** Rate limiter: false means reject. May be async (the Cloudflare rate-limit binding is). */
+  allow: (key: string, now: number) => boolean | Promise<boolean>;
   now: () => number;
 }
 
@@ -76,7 +76,7 @@ export async function handleImport(
   if (request.method !== 'POST') return json({ ok: false, error: 'bad_request' }, 405);
 
   const client = request.headers.get('CF-Connecting-IP') ?? 'unknown';
-  if (!deps.allow(client, deps.now())) return json({ ok: false, error: 'rate_limited' }, 429);
+  if (!(await deps.allow(client, deps.now()))) return json({ ok: false, error: 'rate_limited' }, 429);
 
   let body: unknown;
   try {
