@@ -77,6 +77,10 @@ export function RecipeEditorScreen({
 
   const parse = () => {
     setImportNote(null);
+    setAiUrl(null);
+    importLink.clearError();
+    cleanUpText.clearError();
+    tryWithAi.clearError();
     setLines(draftLinesFromText(rawText, makeId));
     if (!servings) setServings(String(settings.defaultServings));
   };
@@ -91,11 +95,16 @@ export function RecipeEditorScreen({
 
   const cleanUpText = useAsyncAction(async (text: string) => {
     setImportNote(null);
+    setAiUrl(null);
+    importLink.clearError();
+    tryWithAi.clearError();
     applyAiDraft(await runCleanUp(text), text);
   }, 'AI clean-up failed. Use Parse ingredients instead.');
 
   const tryWithAi = useAsyncAction(async (url: string) => {
     setImportNote(null);
+    importLink.clearError();
+    cleanUpText.clearError();
     const page = await fetchText(url);
     if (!page.ok) {
       setImportNote(IMPORT_MESSAGES[page.error].message);
@@ -110,6 +119,8 @@ export function RecipeEditorScreen({
   const importLink = useAsyncAction(async (url: string) => {
     setImportNote(null);
     setAiUrl(null);
+    cleanUpText.clearError();
+    tryWithAi.clearError();
     const result = await importRecipe(url);
     if (!result.ok) {
       const { message, pasteInstead } = IMPORT_MESSAGES[result.error];
@@ -191,7 +202,10 @@ export function RecipeEditorScreen({
           className="h-40 w-full rounded-xl border border-slate-200 p-3 font-mono text-sm"
           placeholder={'https://www.example.com/recipes/tacos\n\nor\n\n2 cups flour\n3 eggs\nSalt, to taste'}
           value={rawText}
-          onChange={(e) => setRawText(e.target.value)}
+          onChange={(e) => {
+            setRawText(e.target.value);
+            setAiUrl(null);
+          }}
         />
         {isLink ? (
           <button

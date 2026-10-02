@@ -99,4 +99,33 @@ describe('RecipeEditorScreen: AI', () => {
     expect(within(alert).getByText(/No recipe data found/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Try with AI' })).not.toBeInTheDocument();
   });
+
+  it('shows only the latest error when a different action fails next', async () => {
+    const { user } = await setup({
+      importRecipe: async () => { throw new Error('boom'); },
+      cleanUp: async () => { throw new LlmError('bad_response'); },
+    });
+    const box = screen.getByLabelText('Ingredients');
+    await user.type(box, URL);
+    await user.click(screen.getByRole('button', { name: 'Import from link' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not import that link');
+
+    await user.clear(box);
+    await user.type(box, 'messy');
+    const button = await screen.findByRole('button', { name: 'Clean up with AI' });
+    await vi.waitFor(() => expect(button).toBeEnabled());
+    await user.click(button);
+    expect(await screen.findByRole('alert')).toHaveTextContent("The AI didn't return usable data.");
+    expect(screen.queryByText(/Could not import that link/)).not.toBeInTheDocument();
+  });
+
+  it('drops Try with AI once the field is edited', async () => {
+    const { user } = await setup();
+    const box = screen.getByLabelText('Ingredients');
+    await user.type(box, URL);
+    await user.click(screen.getByRole('button', { name: 'Import from link' }));
+    expect(await screen.findByRole('button', { name: 'Try with AI' })).toBeInTheDocument();
+    await user.type(box, '2');
+    expect(screen.queryByRole('button', { name: 'Try with AI' })).not.toBeInTheDocument();
+  });
 });
