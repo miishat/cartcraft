@@ -18,6 +18,7 @@ interface Drag {
   startY: number;
   offset: number;
   rowHeight: number;
+  pointerId: number;
 }
 
 export function AislesPage() {
@@ -26,6 +27,7 @@ export function AislesPage() {
   const action = useAsyncAction((fn: () => Promise<void>) => fn(), 'Could not update aisles. Try again.');
   const [drag, setDrag] = useState<Drag | null>(null);
   const [announcement, setAnnouncement] = useState('');
+  const dragRef = useRef<Drag | null>(null);
   const handles = useRef(new Map<string, HTMLButtonElement>());
   const refocus = useRef<string | null>(null);
   const hintId = useId();
@@ -35,6 +37,11 @@ export function AislesPage() {
     if (refocus.current) handles.current.get(refocus.current)?.focus();
     refocus.current = null;
   }, [aisles]);
+
+  // Drops any half-finished drag if the page goes away.
+  useEffect(() => () => {
+    dragRef.current = null;
+  }, []);
 
   if (!aisles) return null;
   const count = aisles.length;
@@ -56,21 +63,38 @@ export function AislesPage() {
     move(id, name, to);
   };
 
+  const endDrag = () => {
+    dragRef.current = null;
+    setDrag(null);
+  };
+
   const onPointerDown = (e: PointerEvent<HTMLButtonElement>, id: string, index: number) => {
+    if (e.button !== 0 || dragRef.current) return;
     e.currentTarget.setPointerCapture?.(e.pointerId);
     const rowHeight = e.currentTarget.closest('li')?.offsetHeight || FALLBACK_ROW_HEIGHT;
-    setDrag({ id, from: index, startY: e.clientY, offset: 0, rowHeight });
+    const next = { id, from: index, startY: e.clientY, offset: 0, rowHeight, pointerId: e.pointerId };
+    dragRef.current = next;
+    setDrag(next);
   };
 
   const onPointerMove = (e: PointerEvent<HTMLButtonElement>) => {
-    setDrag((d) => (d ? { ...d, offset: e.clientY - d.startY } : d));
+    const d = dragRef.current;
+    if (!d || d.pointerId !== e.pointerId) return;
+    const next = { ...d, offset: e.clientY - d.startY };
+    dragRef.current = next;
+    setDrag(next);
   };
 
-  const onPointerUp = (name: string) => {
-    if (!drag) return;
-    const to = dropIndex(drag.from, drag.offset, drag.rowHeight, count);
-    setDrag(null);
-    if (to !== drag.from) move(drag.id, name, to);
+  const onPointerUp = (e: PointerEvent<HTMLButtonElement>, name: string) => {
+    const d = dragRef.current;
+    if (!d || d.pointerId !== e.pointerId) return;
+    const to = dropIndex(d.from, d.offset, d.rowHeight, count);
+    endDrag();
+    if (to !== d.from) move(d.id, name, to);
+  };
+
+  const onPointerCancel = (e: PointerEvent<HTMLButtonElement>) => {
+    if (dragRef.current?.pointerId === e.pointerId) endDrag();
   };
 
   const target = drag ? dropIndex(drag.from, drag.offset, drag.rowHeight, count) : -1;
@@ -111,8 +135,9 @@ export function AislesPage() {
                 onKeyDown={(e) => onKeyDown(e, aisle.id, aisle.name, index)}
                 onPointerDown={(e) => onPointerDown(e, aisle.id, index)}
                 onPointerMove={onPointerMove}
-                onPointerUp={() => onPointerUp(aisle.name)}
-                onPointerCancel={() => setDrag(null)}
+                onPointerUp={(e) => onPointerUp(e, aisle.name)}
+                onPointerCancel={onPointerCancel}
+                onLostPointerCapture={endDrag}
                 className="cursor-grab touch-none rounded-lg p-2 text-slate-400 hover:bg-slate-100 active:cursor-grabbing"
               >
                 <GripVertical size={18} aria-hidden="true" />

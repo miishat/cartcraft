@@ -4,9 +4,6 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 
 ## [Unreleased]
 
-### Added
-- Aisles settings page: drag an aisle by its handle (or use the arrow keys) to match your store layout, and rename aisles in place.
-
 ### Changed
 - Aisles on shopping lists show a food emoji (🥕 🥩 🥛 🥐 ...) on their coloured badge instead of a line icon.
 - Rename list, Copy list as text and Keep screen on moved into a ⋯ menu at the top of a shopping list.

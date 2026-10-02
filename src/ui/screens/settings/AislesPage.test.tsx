@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { CartCraftDb } from '../../../data/db';
 import { renderRoutes } from '../../../test/render';
 import { AislesPage } from './AislesPage';
 
 const routes = [{ path: '/settings/aisles', element: <AislesPage /> }];
+const transformed = () => screen.getAllByRole('listitem').filter((li) => li.style.transform);
 const order = async (db: CartCraftDb) => (await db.aisles.orderBy('order').toArray()).map((a) => a.id);
 
 beforeAll(() => {
@@ -83,5 +84,67 @@ describe('Aisles page', () => {
     fireEvent.pointerMove(handle, { clientY: 300, pointerId: 1 });
     fireEvent.pointerCancel(handle, { pointerId: 1 });
     expect(await order(db)).toEqual(before);
+    expect(transformed()).toHaveLength(0);
+  });
+
+  it('leaves no row shifted after a completed drop', async () => {
+    renderRoutes(routes, '/settings/aisles');
+    const handle = await screen.findByRole('button', { name: 'Reorder Produce' });
+    fireEvent.pointerDown(handle, { clientY: 100, pointerId: 1 });
+    fireEvent.pointerMove(handle, { clientY: 196, pointerId: 1 });
+    expect(transformed().length).toBeGreaterThan(0);
+    fireEvent.pointerUp(handle, { clientY: 196, pointerId: 1 });
+    await waitFor(() => expect(transformed()).toHaveLength(0));
+  });
+
+  it('clears the drag when pointer capture is lost', async () => {
+    renderRoutes(routes, '/settings/aisles');
+    const handle = await screen.findByRole('button', { name: 'Reorder Produce' });
+    fireEvent.pointerDown(handle, { clientY: 100, pointerId: 1 });
+    fireEvent.pointerMove(handle, { clientY: 150, pointerId: 1 });
+    expect(transformed().length).toBeGreaterThan(0);
+    fireEvent.lostPointerCapture(handle, { pointerId: 1 });
+    expect(transformed()).toHaveLength(0);
+    fireEvent.pointerMove(handle, { clientY: 300, pointerId: 1 });
+    expect(transformed()).toHaveLength(0);
+  });
+
+  it('does not start a drag from a non-primary button', async () => {
+    const { db } = renderRoutes(routes, '/settings/aisles');
+    const before = await order(db);
+    const handle = await screen.findByRole('button', { name: 'Reorder Produce' });
+    fireEvent.pointerDown(handle, { clientY: 100, pointerId: 1, button: 2 });
+    fireEvent.pointerMove(handle, { clientY: 300, pointerId: 1 });
+    expect(transformed()).toHaveLength(0);
+    fireEvent.pointerUp(handle, { clientY: 300, pointerId: 1 });
+    expect(await order(db)).toEqual(before);
+  });
+
+  it('drops in the right place when move and release arrive before a re-render', async () => {
+    const { db } = renderRoutes(routes, '/settings/aisles');
+    const handle = await screen.findByRole('button', { name: 'Reorder Produce' });
+    act(() => {
+      fireEvent.pointerDown(handle, { clientY: 100, pointerId: 1 });
+      fireEvent.pointerMove(handle, { clientY: 196, pointerId: 1 });
+      fireEvent.pointerUp(handle, { clientY: 196, pointerId: 1 });
+    });
+    await waitFor(async () => expect((await order(db)).slice(0, 3)).toEqual(['meat-seafood', 'dairy-eggs', 'produce']));
+  });
+
+  it('ignores events from other pointers while dragging', async () => {
+    const { db } = renderRoutes(routes, '/settings/aisles');
+    const before = await order(db);
+    const handle = await screen.findByRole('button', { name: 'Reorder Produce' });
+    fireEvent.pointerDown(handle, { clientY: 100, pointerId: 1 });
+    fireEvent.pointerMove(handle, { clientY: 300, pointerId: 2 });
+    expect(handle.closest('li')).toHaveStyle({ transform: 'translateY(0px)' });
+    fireEvent.pointerUp(handle, { clientY: 300, pointerId: 2 });
+    fireEvent.pointerCancel(handle, { pointerId: 2 });
+    fireEvent.pointerDown(handle, { clientY: 500, pointerId: 2 });
+    fireEvent.pointerMove(handle, { clientY: 196, pointerId: 1 });
+    expect(handle.closest('li')).toHaveStyle({ transform: 'translateY(96px)' });
+    fireEvent.pointerUp(handle, { clientY: 196, pointerId: 1 });
+    await waitFor(async () => expect((await order(db)).slice(0, 3)).toEqual(['meat-seafood', 'dairy-eggs', 'produce']));
+    expect(await order(db)).not.toEqual(before);
   });
 });
