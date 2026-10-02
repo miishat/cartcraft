@@ -60,6 +60,28 @@ describe('Default servings page', () => {
     await waitFor(async () => expect((await getSettings(db)).defaultServings).toBe(6));
   });
 
+  it('never saves a typed number above 99', async () => {
+    const { user, db } = renderRoutes(routes, '/settings/servings');
+    const input = await screen.findByLabelText('Default servings');
+    await waitFor(() => expect(input).toHaveValue(4));
+    await user.clear(input);
+    await user.type(input, '150');
+    await waitFor(async () => expect((await getSettings(db)).defaultServings).toBe(15));
+    expect((await getSettings(db)).defaultServings).toBeLessThanOrEqual(99);
+    await user.tab();
+    expect(input).toHaveValue(15);
+  });
+
+  it('keeps what is typed while the input is focused', async () => {
+    const { user, db } = renderRoutes(routes, '/settings/servings');
+    const input = await screen.findByLabelText('Default servings');
+    await waitFor(() => expect(input).toHaveValue(4));
+    await user.clear(input);
+    await user.type(input, '12');
+    await waitFor(async () => expect((await getSettings(db)).defaultServings).toBe(12));
+    expect(input).toHaveValue(12);
+  });
+
   it('ignores a cleared field and restores the saved number on blur', async () => {
     const { user, db } = renderRoutes(routes, '/settings/servings');
     const input = await screen.findByLabelText('Default servings');

@@ -1,5 +1,5 @@
 import { Minus, Plus } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { updateSettings } from '../../../data/db';
 import { ErrorNote } from '../../components/ErrorNote';
 import { useDb } from '../../db';
@@ -16,7 +16,11 @@ export function ServingsPage() {
   const value = settings.defaultServings;
   // A local draft lets the field be cleared while typing; only positive whole numbers are saved.
   const [draft, setDraft] = useState(String(value));
-  useEffect(() => setDraft(String(value)), [value]);
+  const focused = useRef(false);
+  // Follow the saved value, but never overwrite what is being typed.
+  useEffect(() => {
+    if (!focused.current) setDraft(String(value));
+  }, [value]);
   const save = useAsyncAction((fn: () => Promise<void>) => fn(), 'Could not save that setting. Try again.');
   const set = (n: number) => void save.run(() => updateSettings(db, { defaultServings: n }));
 
@@ -35,9 +39,15 @@ export function ServingsPage() {
           onChange={(e) => {
             setDraft(e.target.value);
             const n = Number(e.target.value);
-            if (e.target.value !== '' && Number.isInteger(n) && n > 0) set(n);
+            if (e.target.value !== '' && Number.isInteger(n) && n >= 1 && n <= MAX) set(n);
           }}
-          onBlur={() => setDraft(String(value))}
+          onFocus={() => {
+            focused.current = true;
+          }}
+          onBlur={() => {
+            focused.current = false;
+            setDraft(String(value));
+          }}
           className="w-20 bg-transparent text-center text-3xl font-bold tabular-nums text-slate-900 outline-none [appearance:textfield] focus:rounded-lg focus:ring-2 focus:ring-emerald-600 [&::-webkit-inner-spin-button]:appearance-none"
         />
         <button type="button" aria-label="More servings" disabled={value >= MAX} onClick={() => set(value + 1)} className={STEP}>
