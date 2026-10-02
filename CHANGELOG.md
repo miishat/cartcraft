@@ -11,6 +11,7 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 - Aisles are reordered by dragging a handle (or with the arrow keys) instead of up and down buttons.
 - The AI provider is picked from a list instead of a dropdown, and "Add an AI key in Settings" links straight to the AI helper page.
 - The Default servings number field now ignores values above 99.
+- Settings rows, Backup buttons and choice lists show a clear outline when reached with the keyboard.
 
 ## [0.3.0] - 2026-10-02
 
