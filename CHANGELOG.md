@@ -4,6 +4,8 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-02
+
 ### Added
 - Recipes have an emoji cover picked from the title, on the recipe list and the recipe page.
 - Aisle buttons at the top of a shopping list show one aisle at a time, with how many items are left in each.
