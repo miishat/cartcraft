@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ListItem } from '../domain';
 import type { Aisle } from '../data/types';
-import { groupListItems, itemLabel, listAsText } from './listView';
+import { groupListItems, itemEditText, itemLabel, listAsText } from './listView';
 
 const aisles: Aisle[] = [
   { id: 'dairy-eggs', name: 'Dairy & Eggs', order: 1 },
@@ -67,5 +67,19 @@ describe('itemLabel and listAsText', () => {
       'us',
     );
     expect(text).toBe('Weekend\n\nProduce\n- Onion: 2\n\nDairy & Eggs\n- Egg: 6\n\nCheck pantry\n- Salt');
+  });
+});
+
+describe('items in aisles that no longer exist', () => {
+  it('still appear in an Other section when the Other aisle is missing', () => {
+    const view = groupListItems([item('1', 'thing', { aisleId: 'gone' })], aisles.filter((a) => a.id !== 'other'));
+    expect(view.aisles.map((s) => [s.id, s.title, s.items.map((i) => i.name)])).toEqual([['other', 'Other', ['thing']]]);
+  });
+});
+
+describe('itemEditText', () => {
+  it('includes amount, name and notes', () => {
+    expect(itemEditText(item('1', 'milk', { amounts: [{ quantity: { min: 473.176 }, unit: 'ml' }], notes: 'whole' }), 'us')).toBe('2 cups milk, whole');
+    expect(itemEditText(item('2', 'paper towels'), 'us')).toBe('paper towels');
   });
 });

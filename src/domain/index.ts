@@ -8,4 +8,4 @@ export { parseIngredientLine } from './parse';
 export { scaleLine } from './scale';
 export { lookupUnit, unitLabel } from './units';
 export { parseYield, type ParsedYield } from './yield';
-export { decodeEntities } from './text';
+export { decodeEntities, normalizeText } from './text';

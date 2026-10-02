@@ -93,3 +93,29 @@ describe('importBackup and undoLastImport', () => {
     expect(await undoLastImport(target)).toBe(false);
   });
 });
+
+describe('parseBackup integrity', () => {
+  async function exported() {
+    const db = await seeded();
+    return JSON.parse(serializeBackup(await exportBackup(db, 1)));
+  }
+
+  it('rejects duplicate ids instead of failing during import', async () => {
+    const file = await exported();
+    file.data.recipes.push({ ...file.data.recipes[0] });
+    const result = parseBackup(JSON.stringify(file));
+    expect(result).toEqual({ ok: false, error: 'invalid', detail: 'duplicate recipes.id' });
+  });
+
+  it('restores a missing Other aisle and missing settings', async () => {
+    const file = await exported();
+    file.data.aisles = file.data.aisles.filter((a: { id: string }) => a.id !== 'other');
+    file.data.settings = [];
+    const result = parseBackup(JSON.stringify(file));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const other = result.backup.data.aisles.find((a) => a.id === 'other');
+    expect(other).toEqual({ id: 'other', name: 'Other', order: 10 });
+    expect(result.backup.data.settings).toHaveLength(1);
+  });
+});

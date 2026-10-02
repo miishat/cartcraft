@@ -62,6 +62,8 @@ export interface Settings {
 export interface Secrets {
   id: 'secrets';
   llmApiKey?: string;
+  /** Provider the key was saved for. Missing on keys saved before this was tracked. */
+  llmKeyProviderId?: string;
 }
 
 /** Everything a backup file carries. */

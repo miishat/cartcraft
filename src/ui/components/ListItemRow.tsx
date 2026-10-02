@@ -1,7 +1,7 @@
 import { Check, MoreHorizontal } from 'lucide-react';
 import { useState } from 'react';
 import { formatAmounts, type ListItem, type UnitSystem } from '../../domain';
-import { itemLabel } from '../../app/listView';
+import { itemEditText, itemLabel } from '../../app/listView';
 import type { Aisle } from '../../data/types';
 
 interface Props {
@@ -18,7 +18,14 @@ interface Props {
 export function ListItemRow({ item, aisles, unitSystem, onToggle, onEdit, onDelete, onMove }: Props) {
   const [open, setOpen] = useState(false);
   const amount = formatAmounts(item.amounts, unitSystem);
-  const [draft, setDraft] = useState(amount ? `${amount} ${item.name}` : item.name);
+  const editText = itemEditText(item, unitSystem);
+  const [draft, setDraft] = useState(editText);
+
+  const toggleMenu = () => {
+    // Start from the item's current text each time, so edits made elsewhere are not overwritten.
+    if (!open) setDraft(editText);
+    setOpen(!open);
+  };
 
   return (
     <li className="rounded-lg bg-white">
@@ -39,7 +46,7 @@ export function ListItemRow({ item, aisles, unitSystem, onToggle, onEdit, onDele
             {item.notes && <span className="block text-xs text-slate-400">{item.notes}</span>}
           </span>
         </button>
-        <button type="button" onClick={() => setOpen(!open)} className="px-3 text-slate-400" aria-label={`Options for ${item.name}`} aria-expanded={open}>
+        <button type="button" onClick={toggleMenu} className="px-3 text-slate-400" aria-label={`Options for ${item.name}`} aria-expanded={open}>
           <MoreHorizontal size={18} />
         </button>
       </div>
@@ -49,10 +56,10 @@ export function ListItemRow({ item, aisles, unitSystem, onToggle, onEdit, onDele
             className="flex gap-2"
             onSubmit={(e) => {
               e.preventDefault();
-              if (draft.trim()) {
-                onEdit(draft);
-                setOpen(false);
-              }
+              if (!draft.trim()) return;
+              // Re-parsing unchanged text can be lossy (for example "2 cloves + 1 tbsp"), so skip it.
+              if (draft !== editText) onEdit(draft);
+              setOpen(false);
             }}
           >
             <input className="min-w-0 flex-1 rounded border border-slate-200 px-2 py-1" value={draft} onChange={(e) => setDraft(e.target.value)} aria-label={`Edit ${item.name}`} />
