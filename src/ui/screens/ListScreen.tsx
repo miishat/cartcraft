@@ -48,8 +48,12 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
   );
 
   /** Runs any list change; a failure shows one inline message instead of an unhandled rejection. */
-  const act = useAsyncAction((fn: () => Promise<void>) => fn(), 'That change did not save. Try again.');
+  const act = useAsyncAction((fn: () => Promise<void>) => {
+    copy.clearError();
+    return fn();
+  }, 'That change did not save. Try again.');
   const copy = useAsyncAction(async (text: string) => {
+    act.clearError();
     await navigator.clipboard.writeText(text);
     setCopied(true);
     clearTimeout(copiedTimer.current);
@@ -57,12 +61,14 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
   }, 'Could not copy. Select the list and copy it manually.');
 
   const sortAction = useAsyncAction(async () => {
+    extrasAction.clearError();
     setAiNote(null);
     const moved = await aiSortUnknownItems(db, id, fetchImpl);
     setAiNote(moved === 0 ? 'AI could not place any of those items. Move them yourself from the item menu.' : `Moved ${moved} ${moved === 1 ? 'item' : 'items'} into aisles.`);
   }, 'AI sorting failed. Move items yourself from the item menu.');
 
   const extrasAction = useAsyncAction(async () => {
+    sortAction.clearError();
     setAiNote(null);
     await aiSwapsAndTips(db, id, now(), fetchImpl);
   }, 'Could not get swaps and tips. Try again.');

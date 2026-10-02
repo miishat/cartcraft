@@ -72,6 +72,21 @@ describe('ListScreen: AI', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('rate limiting');
   });
 
+  it('shows only the latest error when sorting fails and then swaps fail', async () => {
+    const { db, listId } = await seeded(true);
+    const fetchImpl = vi.fn()
+      .mockResolvedValueOnce(new Response('{}', { status: 429 }))
+      .mockResolvedValueOnce(new Response('{}', { status: 500 }));
+    const { user } = render(db, listId, fetchImpl as unknown as ReturnType<typeof reply>);
+    const sort = await screen.findByRole('button', { name: 'Sort 1 unknown item with AI' });
+    await waitFor(() => expect(sort).toBeEnabled());
+    await user.click(sort);
+    expect(await screen.findByRole('alert')).toHaveTextContent('rate limiting');
+    await user.click(screen.getByRole('button', { name: 'Add swaps & tips' }));
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('had a problem'));
+    expect(screen.queryByText(/rate limiting/)).not.toBeInTheDocument();
+  });
+
   it('explains how to enable AI without a key', async () => {
     const { db, listId } = await seeded(false);
     render(db, listId, reply({}));

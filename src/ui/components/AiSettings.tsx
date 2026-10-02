@@ -20,8 +20,12 @@ export function AiSettings() {
 
   useEffect(() => setModel(settings.llm.model), [settings.llm.model]);
 
-  const save = useAsyncAction((fn: () => Promise<void>) => fn(), 'Could not save AI settings. Try again.');
+  const save = useAsyncAction((fn: () => Promise<void>) => {
+    test.clearError();
+    return fn();
+  }, 'Could not save AI settings. Try again.');
   const test = useAsyncAction(async () => {
+    save.clearError();
     setMessage(null);
     const apiKey = keyDraft.trim() || (await db.secrets.get('secrets'))?.llmApiKey || '';
     await testAiConnection({ providerId: provider.id, model, apiKey });
