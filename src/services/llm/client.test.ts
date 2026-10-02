@@ -88,11 +88,21 @@ describe('chatJson', () => {
     expect(await kindOf(chatJson(deepseek, request, hang, 10))).toBe('timeout');
   });
 
+  it('times out when the response body stalls', async () => {
+    const stalled = vi.fn(async (_input: string, init: RequestInit) => ({
+      ok: true,
+      status: 200,
+      json: () =>
+        new Promise<unknown>((_r, reject) =>
+          init.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError'))),
+        ),
+    }) as unknown as Response);
+    expect(await kindOf(chatJson(deepseek, request, stalled, 10))).toBe('timeout');
+  });
+
   it('never puts the key in error messages', async () => {
-    try {
-      await chatJson(deepseek, request, vi.fn(async () => new Response('{}', { status: 401 })));
-    } catch (err) {
-      expect(String((err as Error).message)).not.toContain('sk-test');
-    }
+    const failing = chatJson(deepseek, request, vi.fn(async () => new Response('{}', { status: 401 })));
+    await expect(failing).rejects.toBeInstanceOf(LlmError);
+    await expect(failing).rejects.toSatisfy((err: Error) => !err.message.includes('sk-test'));
   });
 });

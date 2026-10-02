@@ -67,26 +67,27 @@ export async function chatJson(
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
-  let response: Response;
-  try {
-    response = await fetchImpl(`${provider.baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
-  } catch {
-    throw new LlmError(controller.signal.aborted ? 'timeout' : 'network');
-  } finally {
-    clearTimeout(timer);
-  }
-  if (!response.ok) throw new LlmError(statusError(response.status));
-
   let payload: unknown;
   try {
-    payload = await response.json();
-  } catch {
-    throw new LlmError('bad_response');
+    let response: Response;
+    try {
+      response = await fetchImpl(`${provider.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+    } catch {
+      throw new LlmError(controller.signal.aborted ? 'timeout' : 'network');
+    }
+    if (!response.ok) throw new LlmError(statusError(response.status));
+    try {
+      payload = await response.json();
+    } catch {
+      throw new LlmError(controller.signal.aborted ? 'timeout' : 'bad_response');
+    }
+  } finally {
+    clearTimeout(timer);
   }
   const content = (payload as { choices?: { message?: { content?: unknown } }[] })?.choices?.[0]?.message?.content;
   if (typeof content !== 'string' || !content.trim()) throw new LlmError('bad_response');
