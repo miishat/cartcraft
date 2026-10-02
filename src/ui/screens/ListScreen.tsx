@@ -10,7 +10,7 @@ import {
 } from '../../app/lists';
 import { groupListItems, listAsText } from '../../app/listView';
 import { updateSettings } from '../../data/db';
-import { PANTRY_CHECK_ICON, aisleIcon } from '../aisleIcons';
+import { PANTRY_CHECK_ID, aisleIcon } from '../aisleIcons';
 import { ErrorNote } from '../components/ErrorNote';
 import { PromptDialog } from '../components/Dialog';
 import { ListItemRow } from '../components/ListItemRow';
@@ -87,6 +87,7 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
   if (list === null) return <p className="text-slate-500">List not found.</p>;
 
   const view = groupListItems(list.items, aisles);
+  const PantryIcon = aisleIcon(PANTRY_CHECK_ID);
   const unknownCount = new Set(list.items.filter((i) => !i.checked && i.group === 'aisle' && i.aisleId === 'other').map((i) => i.itemKey)).size;
 
   const toggle = (item: ListItem) =>
@@ -218,7 +219,7 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
 
       {view.pantry.length > 0 && (
         <section aria-label="Check pantry">
-          <h2 className={SECTION_HEADING}><PANTRY_CHECK_ICON size={16} className="text-emerald-700" /> Check pantry</h2>
+          <h2 className={SECTION_HEADING}><PantryIcon size={16} className="text-emerald-700" /> Check pantry</h2>
           <ul className="divide-y divide-slate-100 rounded-xl border border-dashed border-slate-300">{view.pantry.map(row)}</ul>
         </section>
       )}
