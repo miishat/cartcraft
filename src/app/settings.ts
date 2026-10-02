@@ -30,3 +30,16 @@ export async function moveAisle(db: CartCraftDb, id: string, direction: 'up' | '
     await db.aisles.update(neighbor.id, { order: current.order });
   });
 }
+
+/** Moves an aisle to a position in the shopping order (clamped) and renumbers every aisle. No-op for an unknown id. */
+export async function moveAisleTo(db: CartCraftDb, id: string, index: number): Promise<void> {
+  await db.transaction('rw', db.aisles, async () => {
+    const aisles = await db.aisles.orderBy('order').toArray();
+    const from = aisles.findIndex((a) => a.id === id);
+    if (from < 0) return;
+    const [moved] = aisles.splice(from, 1);
+    const to = Math.min(Math.max(0, Math.round(index)), aisles.length);
+    aisles.splice(to, 0, moved!);
+    await db.aisles.bulkPut(aisles.map((a, order) => ({ ...a, order })));
+  });
+}
