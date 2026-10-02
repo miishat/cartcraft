@@ -1,10 +1,14 @@
-import { Link2 } from 'lucide-react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { Link2, Sparkles } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import type { IngredientLine } from '../../domain';
+import { aiCleanUpText, type AiDraft } from '../../app/ai';
 import { newId } from '../../app/ids';
 import { deleteRecipe, draftLinesFromText, requestPersistence, saveRecipe } from '../../app/recipes';
-import { IMPORT_MESSAGES, importRecipeFromUrl, looksLikeUrl, type UrlImportResult } from '../../services/urlImport';
+import {
+  IMPORT_MESSAGES, fetchPageText, importRecipeFromUrl, looksLikeUrl, type PageTextResult, type UrlImportResult,
+} from '../../services/urlImport';
 import { ErrorNote } from '../components/ErrorNote';
 import { ReviewTable } from '../components/ReviewTable';
 import { useDb } from '../db';
@@ -15,17 +19,29 @@ interface Props {
   makeId?: () => string;
   now?: () => number;
   importRecipe?: (url: string) => Promise<UrlImportResult>;
+  fetchText?: (url: string) => Promise<PageTextResult>;
+  /** Defaults to aiCleanUpText with this screen's db and makeId. */
+  cleanUp?: (text: string) => Promise<AiDraft>;
 }
 
 /**
  * Add (/recipes/new) or edit (/recipes/:id). Paste ingredients or a recipe link, review the
- * parsed lines, set servings, save. A link that cannot be imported switches to paste mode.
+ * parsed lines, set servings, save. A link that cannot be imported switches to paste mode;
+ * with an AI key, messy text and pages without recipe data can be cleaned up by AI.
  */
-export function RecipeEditorScreen({ makeId = newId, now = Date.now, importRecipe = importRecipeFromUrl }: Props) {
+export function RecipeEditorScreen({
+  makeId = newId,
+  now = Date.now,
+  importRecipe = importRecipeFromUrl,
+  fetchText = fetchPageText,
+  cleanUp,
+}: Props) {
   const { id } = useParams();
   const db = useDb();
   const navigate = useNavigate();
   const settings = useSettings();
+  const hasAi = useLiveQuery(async () => Boolean((await db.secrets.get('secrets'))?.llmApiKey), [db]) ?? false;
+  const runCleanUp = cleanUp ?? ((text: string) => aiCleanUpText(db, text, makeId));
 
   const [loaded, setLoaded] = useState(id === undefined);
   const [missing, setMissing] = useState(false);
@@ -37,6 +53,8 @@ export function RecipeEditorScreen({ makeId = newId, now = Date.now, importRecip
   const [sourceUrl, setSourceUrl] = useState<string | undefined>();
   const [yieldText, setYieldText] = useState<string | undefined>();
   const [importNote, setImportNote] = useState<string | null>(null);
+  /** A link whose page had no recipe data; AI can still read its text. */
+  const [aiUrl, setAiUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (id === undefined) return;
@@ -63,12 +81,40 @@ export function RecipeEditorScreen({ makeId = newId, now = Date.now, importRecip
     if (!servings) setServings(String(settings.defaultServings));
   };
 
+  const applyAiDraft = (draft: AiDraft, text: string) => {
+    setTitle((current) => current || draft.title);
+    setServings(String(draft.servings ?? (servings || settings.defaultServings)));
+    setServingsGuessed(draft.servings === undefined && !servings);
+    setRawText(text);
+    setLines(draft.lines);
+  };
+
+  const cleanUpText = useAsyncAction(async (text: string) => {
+    setImportNote(null);
+    applyAiDraft(await runCleanUp(text), text);
+  }, 'AI clean-up failed. Use Parse ingredients instead.');
+
+  const tryWithAi = useAsyncAction(async (url: string) => {
+    setImportNote(null);
+    const page = await fetchText(url);
+    if (!page.ok) {
+      setImportNote(IMPORT_MESSAGES[page.error].message);
+      return;
+    }
+    const draft = await runCleanUp(page.text);
+    setSourceUrl(page.sourceUrl);
+    setAiUrl(null);
+    applyAiDraft(draft, draft.lines.map((l) => l.raw).join('\n'));
+  }, 'AI could not read that page. Copy the ingredient list and paste it here.');
+
   const importLink = useAsyncAction(async (url: string) => {
     setImportNote(null);
+    setAiUrl(null);
     const result = await importRecipe(url);
     if (!result.ok) {
       const { message, pasteInstead } = IMPORT_MESSAGES[result.error];
       setImportNote(message);
+      if (result.error === 'no_recipe_data') setAiUrl(url.trim());
       if (pasteInstead) {
         setSourceUrl(url.trim());
         setRawText('');
@@ -157,16 +203,41 @@ export function RecipeEditorScreen({ makeId = newId, now = Date.now, importRecip
             <Link2 size={16} /> {importLink.pending ? 'Importing...' : 'Import from link'}
           </button>
         ) : (
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={parse}
+              disabled={!rawText.trim()}
+              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
+            >
+              {lines ? 'Parse again' : 'Parse ingredients'}
+            </button>
+            <button
+              type="button"
+              onClick={() => void cleanUpText.run(rawText)}
+              disabled={!hasAi || !rawText.trim() || cleanUpText.pending}
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium disabled:opacity-40"
+            >
+              <Sparkles size={16} /> {cleanUpText.pending ? 'Cleaning up...' : 'Clean up with AI'}
+            </button>
+            {!hasAi && (
+              <span className="text-xs text-slate-500">
+                <Link to="/settings" className="underline">Add an AI key in Settings</Link> to use AI clean-up.
+              </span>
+            )}
+          </div>
+        )}
+        <ErrorNote message={importNote ?? importLink.error ?? cleanUpText.error ?? tryWithAi.error} />
+        {aiUrl && hasAi && (
           <button
             type="button"
-            onClick={parse}
-            disabled={!rawText.trim()}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
+            onClick={() => void tryWithAi.run(aiUrl)}
+            disabled={tryWithAi.pending}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium disabled:opacity-40"
           >
-            {lines ? 'Parse again' : 'Parse ingredients'}
+            <Sparkles size={16} /> {tryWithAi.pending ? 'Reading the page...' : 'Try with AI'}
           </button>
         )}
-        <ErrorNote message={importNote ?? importLink.error} />
         {sourceUrl && (
           <p className="truncate text-xs text-slate-500">
             Source:{' '}
