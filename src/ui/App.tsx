@@ -1,3 +1,4 @@
+import { AiPage } from './screens/settings/AiPage';
 import { AislesPage } from './screens/settings/AislesPage';
 import { AppearancePage } from './screens/settings/AppearancePage';
 import { ServingsPage } from './screens/settings/ServingsPage';
@@ -31,6 +32,7 @@ export function AppRoutes() {
         <Route path="settings/aisles" element={<AislesPage />} />
         <Route path="settings/pantry" element={<PantryPage />} />
         <Route path="settings/storage" element={<StoragePage />} />
+        <Route path="settings/ai" element={<AiPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
