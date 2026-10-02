@@ -7,6 +7,7 @@ import {
   type BackupFile, type ParseResult,
 } from '../../data/backup';
 import { updateSettings } from '../../data/db';
+import { AiSettings } from '../components/AiSettings';
 import { ErrorNote } from '../components/ErrorNote';
 import { useDb } from '../db';
 import { useAisles, useSettings } from '../hooks';
@@ -220,6 +221,10 @@ export function SettingsScreen({ now = Date.now }: Props) {
           ))}
         </ol>
         <ErrorNote message={aisleAction.error} />
+      </Section>
+
+      <Section title="AI helper">
+        <AiSettings />
       </Section>
 
       <Section title="Backup">
