@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Copy, Pencil, Plus, Sparkles } from 'lucide-react';
+import { Plus, Sparkles } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router';
 import type { ListItem } from '../../domain';
@@ -16,6 +16,7 @@ import { ErrorNote } from '../components/ErrorNote';
 import { PromptDialog } from '../components/Dialog';
 import { ProgressBar } from '../components/ProgressBar';
 import { ListItemRow } from '../components/ListItemRow';
+import { Menu, MenuCheckbox, MenuItem } from '../components/Menu';
 import { useDb } from '../db';
 import { useAisles, useSettings } from '../hooks';
 import { useAsyncAction } from '../useAsyncAction';
@@ -149,32 +150,26 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
             <h1 className="text-[28px] font-bold leading-tight tracking-tight text-slate-900">{list.name}</h1>
             <p className="text-sm text-slate-500">From {list.sources.map((s) => `${s.title} (${s.targetServings})`).join(', ')}</p>
           </div>
-          <div className="flex shrink-0 gap-1">
-            <button type="button" onClick={() => setRenaming(true)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Rename list">
-              <Pencil size={18} />
-            </button>
-            <button
-              type="button"
-              onClick={() => void copy.run(listAsText(list.name, list.items, aisles, settings.unitSystem))}
-              className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
-              aria-label="Copy list as text"
-            >
-              <Copy size={18} />
-            </button>
+          <div className="shrink-0">
+            <Menu label="List options">
+              <MenuItem icon="✏️" onSelect={() => setRenaming(true)}>Rename list</MenuItem>
+              <MenuItem icon="📋" onSelect={() => void copy.run(listAsText(list.name, list.items, aisles, settings.unitSystem))}>
+                Copy list as text
+              </MenuItem>
+              {canWakeLock && (
+                <MenuCheckbox
+                  icon="☀️"
+                  checked={settings.keepScreenOn}
+                  onChange={(on) => void act.run(() => updateSettings(db, { keepScreenOn: on }))}
+                >
+                  Keep screen on
+                </MenuCheckbox>
+              )}
+            </Menu>
           </div>
         </div>
         <ProgressBar done={list.items.filter((i) => i.checked).length} total={list.items.length} />
       </div>
-      {canWakeLock && (
-        <label className="flex w-fit items-center gap-2 text-sm text-slate-600">
-          <input
-            type="checkbox"
-            checked={settings.keepScreenOn}
-            onChange={(e) => void act.run(() => updateSettings(db, { keepScreenOn: e.target.checked }))}
-          />
-          Keep screen on
-        </label>
-      )}
       {copied && <p role="status" className="text-sm text-emerald-700">Copied to clipboard</p>}
       <ErrorNote message={act.error ?? copy.error} />
 
@@ -199,7 +194,7 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
         </button>
         {!hasAi && (
           <span className="text-xs text-slate-500">
-            <Link to="/settings" className="underline">Add an AI key in Settings</Link> to use these.
+            <Link to="/settings/ai" className="underline">Add an AI key in Settings</Link> to use these.
           </span>
         )}
       </div>

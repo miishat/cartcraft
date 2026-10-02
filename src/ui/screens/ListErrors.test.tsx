@@ -57,11 +57,13 @@ describe('ListScreen fixes and error handling', () => {
     const { db, listId } = await seededList();
     const { user } = renderRoutes(routes, `/lists/${listId}`, db);
     const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValueOnce(new Error('denied'));
-    await user.click(await screen.findByRole('button', { name: 'Copy list as text' }));
+    await user.click(await screen.findByRole('button', { name: 'List options' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Copy list as text' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not copy.');
 
     writeText.mockResolvedValueOnce();
-    await user.click(screen.getByRole('button', { name: 'Copy list as text' }));
+    await user.click(screen.getByRole('button', { name: 'List options' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Copy list as text' }));
     expect(await screen.findByText('Copied to clipboard')).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByText('Copied to clipboard')).not.toBeInTheDocument());
   });

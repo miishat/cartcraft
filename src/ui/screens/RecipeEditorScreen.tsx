@@ -237,7 +237,7 @@ export function RecipeEditorScreen({
             </button>
             {!hasAi && (
               <span className="text-xs text-slate-500">
-                <Link to="/settings" className="underline">Add an AI key in Settings</Link> to use AI clean-up.
+                <Link to="/settings/ai" className="underline">Add an AI key in Settings</Link> to use AI clean-up.
               </span>
             )}
           </div>
