@@ -5,6 +5,7 @@ import { ServingsPage } from './screens/settings/ServingsPage';
 import { PantryPage } from './screens/settings/PantryPage';
 import { StoragePage } from './screens/settings/StoragePage';
 import { UnitsPage } from './screens/settings/UnitsPage';
+import { BackupPage } from './screens/settings/BackupPage';
 import { Navigate, Route, Routes } from 'react-router';
 import { Layout } from './Layout';
 import { ListScreen } from './screens/ListScreen';
@@ -33,6 +34,7 @@ export function AppRoutes() {
         <Route path="settings/pantry" element={<PantryPage />} />
         <Route path="settings/storage" element={<StoragePage />} />
         <Route path="settings/ai" element={<AiPage />} />
+        <Route path="settings/backup" element={<BackupPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
