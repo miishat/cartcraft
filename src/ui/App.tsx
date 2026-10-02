@@ -1,3 +1,6 @@
+import { AppearancePage } from './screens/settings/AppearancePage';
+import { ServingsPage } from './screens/settings/ServingsPage';
+import { UnitsPage } from './screens/settings/UnitsPage';
 import { Navigate, Route, Routes } from 'react-router';
 import { Layout } from './Layout';
 import { ListScreen } from './screens/ListScreen';
@@ -19,6 +22,9 @@ export function AppRoutes() {
         <Route path="lists" element={<ListsScreen />} />
         <Route path="lists/:id" element={<ListScreen />} />
         <Route path="settings" element={<SettingsScreen />} />
+        <Route path="settings/appearance" element={<AppearancePage />} />
+        <Route path="settings/units" element={<UnitsPage />} />
+        <Route path="settings/servings" element={<ServingsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
