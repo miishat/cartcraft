@@ -11,6 +11,11 @@ import { SettingsScreen } from './SettingsScreen';
 const routes = [{ path: '/settings', element: <SettingsScreen now={() => Date.UTC(2026, 9, 1)} /> }];
 
 describe('SettingsScreen', () => {
+  it('shows the app version', async () => {
+    renderRoutes(routes, '/settings');
+    expect(await screen.findByText('CartCraft version test')).toBeInTheDocument();
+  });
+
   it('saves the unit system and default servings', async () => {
     const { user, db } = renderRoutes(routes, '/settings');
     await user.click(await screen.findByLabelText('Metric (ml, g, kg)'));

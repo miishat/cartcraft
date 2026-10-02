@@ -282,6 +282,7 @@ export function SettingsScreen({ now = Date.now }: Props) {
           {settings.persistGranted === undefined && 'Storage protection is requested after you save your first recipe. '}
           {usage}
         </p>
+        <p className="text-xs text-slate-400">CartCraft version {__APP_VERSION__}</p>
       </Section>
     </div>
   );
