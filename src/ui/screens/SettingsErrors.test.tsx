@@ -20,10 +20,10 @@ describe('SettingsScreen error handling', () => {
   it('reports a failed import and leaves data unchanged', async () => {
     const text = await backupText();
     const { user, db } = renderRoutes(routes, '/settings');
-    await user.click(await screen.findByText('Or paste a backup'));
+    await user.click(await screen.findByRole('button', { name: 'Paste' }));
     await user.click(screen.getByLabelText('Paste backup'));
     await user.paste(text);
-    await user.click(screen.getByRole('button', { name: 'Check backup' }));
+    await user.click(screen.getByRole('button', { name: 'Check' }));
     vi.spyOn(db.snapshots, 'put').mockRejectedValueOnce(new Error('quota'));
     const confirm = await screen.findByRole('button', { name: 'Replace my data' });
     await user.click(confirm);
@@ -51,7 +51,7 @@ describe('SettingsScreen error handling', () => {
   it('accepts the same file twice in a row', async () => {
     const text = await backupText();
     const { user } = renderRoutes(routes, '/settings');
-    const input = (await screen.findByText('Import file')).querySelector('input') as HTMLInputElement;
+    const input = (await screen.findByText('Import')).querySelector('input') as HTMLInputElement;
     const file = new File([text], 'backup.json', { type: 'application/json' });
     await user.upload(input, file);
     expect(await screen.findByRole('button', { name: 'Replace my data' })).toBeInTheDocument();

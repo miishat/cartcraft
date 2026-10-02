@@ -6,7 +6,10 @@ import { CartCraftDb } from './data/db';
 import { AppRoutes } from './ui/App';
 import { DbProvider } from './ui/db';
 import { PwaStatus } from './ui/PwaStatus';
+import { initTheme } from './ui/theme';
 import './index.css';
+
+initTheme();
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing #root element');

@@ -3,6 +3,7 @@ import { Layout } from './Layout';
 import { ListScreen } from './screens/ListScreen';
 import { ListsScreen } from './screens/ListsScreen';
 import { RecipeEditorScreen } from './screens/RecipeEditorScreen';
+import { RecipeViewScreen } from './screens/RecipeViewScreen';
 import { RecipesScreen } from './screens/RecipesScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 
@@ -13,6 +14,7 @@ export function AppRoutes() {
       <Route element={<Layout />}>
         <Route index element={<RecipesScreen />} />
         <Route path="recipes/new" element={<RecipeEditorScreen />} />
+        <Route path="recipes/:id/view" element={<RecipeViewScreen />} />
         <Route path="recipes/:id" element={<RecipeEditorScreen />} />
         <Route path="lists" element={<ListsScreen />} />
         <Route path="lists/:id" element={<ListScreen />} />

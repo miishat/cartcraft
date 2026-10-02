@@ -11,7 +11,7 @@ test('export from one browser and import into another, without the AI key', asyn
   await expect(page.getByRole('button', { name: 'Remove key' })).toBeVisible();
 
   const download = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Export backup' }).click();
+  await page.getByRole('button', { name: 'Export' }).click();
   const file = testInfo.outputPath('backup.json');
   await (await download).saveAs(file);
   const text = await readFile(file, 'utf8');
@@ -22,7 +22,7 @@ test('export from one browser and import into another, without the AI key', asyn
   const other = await browser.newContext();
   const second = await other.newPage();
   await second.goto('/settings');
-  await second.getByLabel('Import file').setInputFiles(file);
+  await second.getByLabel('Import').setInputFiles(file);
   await second.getByRole('button', { name: 'Replace my data' }).click();
   await expect(second.getByText('Import complete.', { exact: false })).toBeVisible();
   await second.goto('/');

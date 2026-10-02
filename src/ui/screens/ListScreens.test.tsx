@@ -29,13 +29,37 @@ describe('ListsScreen', () => {
     const { user } = renderRoutes(routes, '/lists', db);
     expect(await screen.findByText('Shopping list, Oct 1')).toBeInTheDocument();
     expect(screen.getByText('0 of 3 items checked')).toBeInTheDocument();
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
     await user.click(screen.getByRole('button', { name: 'Delete Shopping list, Oct 1' }));
+    await user.click(await screen.findByRole('button', { name: 'Delete list' }));
     expect(await screen.findByText(/No lists yet/)).toBeInTheDocument();
   });
 });
 
 describe('ListScreen', () => {
+  it('renames the list in an in-app dialog, not a browser prompt', async () => {
+    const prompt = vi.spyOn(window, 'prompt');
+    const { db, listId } = await seededList();
+    const { user } = renderRoutes(routes, `/lists/${listId}`, db);
+    await user.click(await screen.findByRole('button', { name: 'Rename list' }));
+    const dialog = screen.getByRole('dialog', { name: 'Rename list' });
+    const input = within(dialog).getByLabelText('List name');
+    await user.clear(input);
+    await user.type(input, 'Weekend shop');
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+    expect(await screen.findByRole('heading', { name: 'Weekend shop' })).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(prompt).not.toHaveBeenCalled();
+  });
+
+  it('cancelling the rename dialog changes nothing', async () => {
+    const { db, listId } = await seededList();
+    const { user } = renderRoutes(routes, `/lists/${listId}`, db);
+    await user.click(await screen.findByRole('button', { name: 'Rename list' }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Shopping list, Oct 1' })).toBeInTheDocument();
+  });
+
   it('shows a not-found message for a missing list', async () => {
     renderRoutes(routes, '/lists/missing', createTestDb());
     expect(await screen.findByText('List not found.')).toBeInTheDocument();

@@ -4,6 +4,20 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Added
+- Each aisle on a shopping list now has its own icon next to its name.
+- Recipes can be opened in the app (View on the recipe list): ingredients, a servings stepper that scales the amounts, and the source link.
+- Dark theme. Settings has an Appearance choice: match the device, light or dark.
+
+### Changed
+- Colours are warmer: cream backgrounds and brown-grey text instead of cool grey.
+- The scrollbar now follows the app colours in both themes.
+- On a recipe, the Save button is just "Save" and Delete is a proper outlined button with a bin icon.
+- Renaming a list and deleting a list or recipe now use an in-app dialog instead of the browser's pop-up.
+- The browser tab and installed app icon now use the dark chef hat from the app header on a white tile instead of a green cart.
+- Settings is grouped into Shopping, AI helper and Your data.
+- The data buttons in Settings share one style and are named Export, Import, Share and Paste; Paste now opens the paste box.
+
 ## [0.2.0] - 2026-10-01
 
 ### Added

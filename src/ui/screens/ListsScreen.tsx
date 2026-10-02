@@ -1,18 +1,17 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import { Link } from 'react-router';
 import { deleteList } from '../../app/lists';
+import { ConfirmDialog } from '../components/Dialog';
 import { useDb } from '../db';
 
 /** Saved lists, newest first. */
 export function ListsScreen() {
   const db = useDb();
   const lists = useLiveQuery(() => db.lists.orderBy('createdAt').reverse().toArray(), [db]);
+  const [toDelete, setToDelete] = useState<{ id: string; name: string } | null>(null);
   if (!lists) return null;
-
-  const onDelete = async (id: string, name: string) => {
-    if (window.confirm(`Delete "${name}"?`)) await deleteList(db, id);
-  };
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
@@ -35,7 +34,7 @@ export function ListsScreen() {
                 </Link>
                 <button
                   type="button"
-                  onClick={() => void onDelete(list.id, list.name)}
+                  onClick={() => setToDelete({ id: list.id, name: list.name })}
                   className="p-2 text-slate-400 hover:text-red-600"
                   aria-label={`Delete ${list.name}`}
                 >
@@ -45,6 +44,19 @@ export function ListsScreen() {
             );
           })}
         </ul>
+      )}
+      {toDelete && (
+        <ConfirmDialog
+          title={`Delete "${toDelete.name}"?`}
+          message="This list will be removed. Your recipes are not affected."
+          confirmLabel="Delete list"
+          danger
+          onCancel={() => setToDelete(null)}
+          onConfirm={() => {
+            setToDelete(null);
+            void deleteList(db, toDelete.id);
+          }}
+        />
       )}
     </div>
   );

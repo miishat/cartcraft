@@ -11,6 +11,7 @@ import { AiSettings } from '../components/AiSettings';
 import { ErrorNote } from '../components/ErrorNote';
 import { useDb } from '../db';
 import { useAisles, useSettings } from '../hooks';
+import { getThemePref, setThemePref, type ThemePref } from '../theme';
 import { useAsyncAction } from '../useAsyncAction';
 
 const IMPORT_ERRORS: Record<Exclude<ParseResult, { ok: true }>['error'], string> = {
@@ -21,10 +22,25 @@ const IMPORT_ERRORS: Record<Exclude<ParseResult, { ok: true }>['error'], string>
   invalid: 'That backup is damaged or incomplete.',
 };
 
+/** One look for every action button in the Your data section. */
+const ACTION_BUTTON = 'cursor-pointer rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-40';
+
+function Group({ title, hint, children }: { title: string; hint: string; children: ReactNode }) {
+  return (
+    <div className="space-y-3">
+      <div>
+        <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
+        <p className="text-sm text-slate-500">{hint}</p>
+      </div>
+      {children}
+    </div>
+  );
+}
+
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-4" aria-label={title}>
-      <h2 className="font-semibold text-slate-900">{title}</h2>
+      <h3 className="font-medium text-slate-900">{title}</h3>
       {children}
     </section>
   );
@@ -50,6 +66,35 @@ function DefaultServings({ value, onSave }: { value: number; onSave: (n: number)
         onBlur={() => setDraft(String(value))}
       />
     </label>
+  );
+}
+
+const THEME_CHOICES: { value: ThemePref; label: string }[] = [
+  { value: 'system', label: 'Match my device' },
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
+];
+
+function ThemeChoice() {
+  const [pref, setPref] = useState(getThemePref);
+  return (
+    <fieldset className="flex flex-wrap gap-x-4 gap-y-2">
+      <legend className="sr-only">Theme</legend>
+      {THEME_CHOICES.map(({ value, label }) => (
+        <label key={value} className="flex items-center gap-2">
+          <input
+            type="radio"
+            name="theme"
+            checked={pref === value}
+            onChange={() => {
+              setPref(value);
+              setThemePref(value);
+            }}
+          />
+          {label}
+        </label>
+      ))}
+    </fieldset>
   );
 }
 
@@ -88,6 +133,7 @@ export function SettingsScreen({ now = Date.now }: Props) {
   const canUndo = useLiveQuery(async () => (await db.snapshots.get('last-import')) !== undefined, [db]);
   const [staple, setStaple] = useState('');
   const [pasted, setPasted] = useState('');
+  const [showPaste, setShowPaste] = useState(false);
   const [pending, setPending] = useState<BackupFile | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [usage, setUsage] = useState<string | null>(null);
@@ -115,7 +161,7 @@ export function SettingsScreen({ now = Date.now }: Props) {
     try {
       await navigator.share({ files: [file], title: 'CartCraft backup' });
     } catch (err) {
-      if (!(err instanceof DOMException && err.name === 'AbortError')) setMessage('Sharing failed. Use Export backup instead.');
+      if (!(err instanceof DOMException && err.name === 'AbortError')) setMessage('Sharing failed. Use Export instead.');
     }
   }, 'Could not create the backup. Try again.');
 
@@ -150,6 +196,7 @@ export function SettingsScreen({ now = Date.now }: Props) {
     await importBackup(db, backup, now());
     setPending(null);
     setPasted('');
+    setShowPaste(false);
     setMessage('Import complete. Your previous data can be restored with Undo last import.');
   }, 'Import failed. Your data was not changed.');
 
@@ -160,9 +207,16 @@ export function SettingsScreen({ now = Date.now }: Props) {
   const summary = pending ? summarizeBackup(pending.data) : null;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
+    <div className="mx-auto max-w-2xl space-y-8">
       <h1 className="text-2xl font-semibold text-slate-900">Settings</h1>
 
+      <Group title="Appearance" hint="Colours for this device.">
+      <Section title="Theme">
+        <ThemeChoice />
+      </Section>
+      </Group>
+
+      <Group title="Shopping" hint="How recipes and lists are measured and sorted.">
       <Section title="Units and servings">
         <fieldset className="flex gap-4">
           <legend className="sr-only">Unit system</legend>
@@ -223,21 +277,26 @@ export function SettingsScreen({ now = Date.now }: Props) {
         <ErrorNote message={aisleAction.error} />
       </Section>
 
+      </Group>
+
+      <Group title="AI helper" hint="Optional. Bring your own key.">
       <Section title="AI helper">
         <AiSettings />
       </Section>
+      </Group>
 
+      <Group title="Your data" hint="Backups and storage on this device.">
       <Section title="Backup">
         <p className="text-sm text-slate-500">
           Data lives only on this device. Export a backup to move it to another device. Your AI key is never included.
         </p>
         <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={() => void exportAction.run()} className="rounded-lg bg-slate-900 px-4 py-2 text-sm text-white">Export backup</button>
+          <button type="button" onClick={() => void exportAction.run()} className={ACTION_BUTTON}>Export</button>
           {shareable && (
-            <button type="button" onClick={() => void shareAction.run()} className="rounded-lg border border-slate-300 px-4 py-2 text-sm">Share backup</button>
+            <button type="button" onClick={() => void shareAction.run()} className={ACTION_BUTTON}>Share</button>
           )}
-          <label className="cursor-pointer rounded-lg border border-slate-300 px-4 py-2 text-sm">
-            Import file
+          <label className={ACTION_BUTTON}>
+            Import
             <input
               type="file"
               accept=".json,application/json,text/plain"
@@ -250,15 +309,17 @@ export function SettingsScreen({ now = Date.now }: Props) {
               }}
             />
           </label>
+          <button type="button" aria-expanded={showPaste} onClick={() => setShowPaste((open) => !open)} className={ACTION_BUTTON}>Paste</button>
           {canUndo && (
-            <button type="button" onClick={() => void undoAction.run()} className="rounded-lg border border-amber-400 px-4 py-2 text-sm text-amber-800">Undo last import</button>
+            <button type="button" onClick={() => void undoAction.run()} className={ACTION_BUTTON}>Undo last import</button>
           )}
         </div>
-        <details>
-          <summary className="cursor-pointer text-sm text-slate-600">Or paste a backup</summary>
-          <textarea className="mt-2 h-24 w-full rounded border border-slate-200 p-2 font-mono text-xs" value={pasted} onChange={(e) => setPasted(e.target.value)} aria-label="Paste backup" />
-          <button type="button" disabled={!pasted.trim()} onClick={() => readImport(pasted)} className="mt-1 rounded border border-slate-300 px-3 py-1 text-sm disabled:opacity-40">Check backup</button>
-        </details>
+        {showPaste && (
+          <div className="space-y-2">
+            <textarea className="h-24 w-full rounded border border-slate-200 p-2 font-mono text-xs" value={pasted} onChange={(e) => setPasted(e.target.value)} aria-label="Paste backup" />
+            <button type="button" disabled={!pasted.trim()} onClick={() => readImport(pasted)} className={ACTION_BUTTON}>Check</button>
+          </div>
+        )}
         {summary && pending && (
           <div role="alert" className="space-y-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
             <p>
@@ -284,6 +345,7 @@ export function SettingsScreen({ now = Date.now }: Props) {
         </p>
         <p className="text-xs text-slate-400">CartCraft version {__APP_VERSION__}</p>
       </Section>
+      </Group>
     </div>
   );
 }

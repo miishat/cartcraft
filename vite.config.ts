@@ -39,7 +39,7 @@ export default defineConfig({
         name: 'CartCraft',
         short_name: 'CartCraft',
         description: 'Turn saved recipes into one aisle-sorted shopping list.',
-        theme_color: '#064e3b',
+        theme_color: '#ffffff',
         background_color: '#f8fafc',
         display: 'standalone',
         start_url: '/',

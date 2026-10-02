@@ -89,14 +89,17 @@ export function RecipesScreen({ makeId = newId, now = Date.now }: Props) {
                       {isSelected ? <CheckCircle2 className="text-emerald-700" /> : <Circle className="text-slate-300" />}
                     </button>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium text-slate-900">{recipe.title}</p>
+                      <Link to={`/recipes/${recipe.id}/view`} className="block truncate font-medium text-slate-900 hover:underline">
+                        {recipe.title}
+                      </Link>
                       <p className="text-xs text-slate-500">
                         {recipe.ingredients.length} ingredients · serves {recipe.baseServings}
                       </p>
                     </div>
-                    <Link to={`/recipes/${recipe.id}`} className="text-sm font-medium text-slate-600" aria-label={`Edit ${recipe.title}`}>
-                      Edit
-                    </Link>
+                    <div className="flex shrink-0 items-center gap-3 text-sm font-medium text-slate-600">
+                      <Link to={`/recipes/${recipe.id}/view`} aria-label={`View ${recipe.title}`}>View</Link>
+                      <Link to={`/recipes/${recipe.id}`} aria-label={`Edit ${recipe.title}`}>Edit</Link>
+                    </div>
                   </div>
                   {isSelected && (
                     <div className="mt-2 flex items-center gap-2 pl-9 text-sm text-slate-600">

@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Link2, Sparkles } from 'lucide-react';
+import { Link2, Sparkles, Trash2 } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import type { IngredientLine } from '../../domain';
@@ -9,6 +9,7 @@ import { deleteRecipe, draftLinesFromText, requestPersistence, saveRecipe } from
 import {
   IMPORT_MESSAGES, fetchPageText, importRecipeFromUrl, looksLikeUrl, type PageTextResult, type UrlImportResult,
 } from '../../services/urlImport';
+import { ConfirmDialog } from '../components/Dialog';
 import { ErrorNote } from '../components/ErrorNote';
 import { ReviewTable } from '../components/ReviewTable';
 import { useDb } from '../db';
@@ -43,6 +44,7 @@ export function RecipeEditorScreen({
   const hasAi = useLiveQuery(() => hasUsableAiKey(db), [db]) ?? false;
   const runCleanUp = cleanUp ?? ((text: string) => aiCleanUpText(db, text, makeId));
 
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [loaded, setLoaded] = useState(id === undefined);
   const [missing, setMissing] = useState(false);
   const [rawText, setRawText] = useState('');
@@ -179,10 +181,6 @@ export function RecipeEditorScreen({
     if (canSave && lines) void save.run(lines);
   };
 
-  const onDelete = () => {
-    if (id && window.confirm(`Delete "${title}"?`)) void remove.run(id);
-  };
-
   if (!loaded) return null;
   if (missing) {
     return (
@@ -304,15 +302,34 @@ export function RecipeEditorScreen({
 
           <div className="flex items-center gap-3">
             <button type="submit" disabled={!canSave || save.pending} className="rounded-lg bg-emerald-800 px-5 py-2.5 font-medium text-white disabled:opacity-40">
-              Save recipe
+              Save
             </button>
             {id && (
-              <button type="button" onClick={onDelete} disabled={remove.pending} className="text-sm font-medium text-red-700">
-                Delete
+              <button
+                type="button"
+                onClick={() => setConfirmingDelete(true)}
+                disabled={remove.pending}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-red-300 px-4 py-2.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-40"
+              >
+                <Trash2 size={16} /> Delete
               </button>
             )}
           </div>
         </>
+      )}
+
+      {confirmingDelete && id && (
+        <ConfirmDialog
+          title={`Delete "${title}"?`}
+          message="This recipe will be removed. Lists you already built from it are not affected."
+          confirmLabel="Delete recipe"
+          danger
+          onCancel={() => setConfirmingDelete(false)}
+          onConfirm={() => {
+            setConfirmingDelete(false);
+            void remove.run(id);
+          }}
+        />
       )}
     </form>
   );

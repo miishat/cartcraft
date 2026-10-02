@@ -2,8 +2,111 @@
 
 @theme {
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* Warm light theme: the slate scale the screens use is a warm cream-to-brown ramp instead of cool grey. */
+  --color-white: #fffdf9;
+  --color-slate-50: #faf7f2;
+  --color-slate-100: #f3ede4;
+  --color-slate-200: #e8dfd2;
+  --color-slate-300: #d6cabb;
+  --color-slate-400: #a89c8e;
+  --color-slate-500: #7a6f63;
+  --color-slate-600: #5c534a;
+  --color-slate-700: #443d36;
+  --color-slate-800: #2e2924;
+  --color-slate-900: #1f1b17;
+  --color-slate-950: #120f0c;
+}
+
+/*
+ * Dark theme: each ramp is mirrored (50 <-> 950, 100 <-> 900 ...), so a class like
+ * "bg-slate-900 text-white" keeps its contrast without any dark: variants in the markup.
+ */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-white: #1c1917;
+  --color-slate-50: #0c0a09;
+  --color-slate-100: #292524;
+  --color-slate-200: #3a3532;
+  --color-slate-300: #57524d;
+  --color-slate-400: #78716c;
+  --color-slate-500: #a8a29e;
+  --color-slate-600: #bcb6b1;
+  --color-slate-700: #d6d3d1;
+  --color-slate-800: #e7e5e4;
+  --color-slate-900: #faf9f7;
+  --color-slate-950: #ffffff;
+
+  --color-emerald-50: #022c22;
+  --color-emerald-100: #064e3b;
+  --color-emerald-200: #065f46;
+  --color-emerald-300: #047857;
+  --color-emerald-400: #059669;
+  --color-emerald-500: #10b981;
+  --color-emerald-600: #34d399;
+  --color-emerald-700: #6ee7b7;
+  --color-emerald-800: #a7f3d0;
+  --color-emerald-900: #d1fae5;
+
+  --color-amber-50: #451a03;
+  --color-amber-100: #78350f;
+  --color-amber-200: #92400e;
+  --color-amber-300: #b45309;
+  --color-amber-400: #d97706;
+  --color-amber-500: #f59e0b;
+  --color-amber-600: #fbbf24;
+  --color-amber-700: #fcd34d;
+  --color-amber-800: #fde68a;
+  --color-amber-900: #fef3c7;
+
+  --color-red-50: #450a0a;
+  --color-red-100: #7f1d1d;
+  --color-red-200: #991b1b;
+  --color-red-300: #b91c1c;
+  --color-red-600: #f87171;
+  --color-red-700: #fca5a5;
+  --color-red-800: #fecaca;
 }
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* Firefox and current Chromium; the ::-webkit rules below cover Safari. */
+  scrollbar-color: var(--color-slate-300) transparent;
+}
+
+body {
+  background-color: var(--color-slate-50);
+  color: var(--color-slate-800);
+}
+
+@layer base {
+  input:not([type='checkbox'], [type='radio']),
+  textarea,
+  select {
+    background-color: var(--color-white);
+    color: var(--color-slate-900);
+  }
+
+  ::placeholder {
+    color: var(--color-slate-400);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-slate-300);
+  border: 3px solid var(--color-slate-50);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-slate-400);
 }

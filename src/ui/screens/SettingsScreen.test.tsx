@@ -16,6 +16,16 @@ describe('SettingsScreen', () => {
     expect(await screen.findByText('CartCraft version test')).toBeInTheDocument();
   });
 
+  it('switches the theme and remembers it on this device', async () => {
+    const { user } = renderRoutes(routes, '/settings');
+    await user.click(await screen.findByRole('radio', { name: 'Dark' }));
+    expect(document.documentElement.dataset.theme).toBe('dark');
+    expect(localStorage.getItem('cartcraft-theme')).toBe('dark');
+    await user.click(screen.getByRole('radio', { name: 'Match my device' }));
+    expect(localStorage.getItem('cartcraft-theme')).toBeNull();
+    delete document.documentElement.dataset.theme;
+  });
+
   it('saves the unit system and default servings', async () => {
     const { user, db } = renderRoutes(routes, '/settings');
     await user.click(await screen.findByLabelText('Metric (ml, g, kg)'));
@@ -51,7 +61,7 @@ describe('SettingsScreen', () => {
     vi.stubGlobal('URL', Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() }));
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
     const { user } = renderRoutes(routes, '/settings');
-    await user.click(await screen.findByRole('button', { name: 'Export backup' }));
+    await user.click(await screen.findByRole('button', { name: 'Export' }));
     expect(await screen.findByText('Backup downloaded.')).toBeInTheDocument();
     expect(createObjectURL).toHaveBeenCalledTimes(1);
     expect(click).toHaveBeenCalledTimes(1);
@@ -60,15 +70,15 @@ describe('SettingsScreen', () => {
 
   it('hides Share when the browser cannot share files', async () => {
     renderRoutes(routes, '/settings');
-    await screen.findByRole('button', { name: 'Export backup' });
-    expect(screen.queryByRole('button', { name: 'Share backup' })).not.toBeInTheDocument();
+    await screen.findByRole('button', { name: 'Export' });
+    expect(screen.queryByRole('button', { name: 'Share' })).not.toBeInTheDocument();
   });
 
   it('shares the backup as a text file when supported', async () => {
     const share = vi.fn(async () => undefined);
     Object.assign(navigator, { share, canShare: () => true });
     const { user } = renderRoutes(routes, '/settings');
-    await user.click(await screen.findByRole('button', { name: 'Share backup' }));
+    await user.click(await screen.findByRole('button', { name: 'Share' }));
     await waitFor(() => expect(share).toHaveBeenCalledTimes(1));
     const [{ files }] = share.mock.calls[0] as unknown as [{ files: File[] }];
     expect(files[0]?.name).toBe('cartcraft-backup-2026-10-01.txt');
@@ -84,10 +94,10 @@ describe('SettingsScreen', () => {
     const text = serializeBackup(await exportBackup(source, 1));
 
     const { user, db } = renderRoutes(routes, '/settings');
-    await user.click(await screen.findByText('Or paste a backup'));
+    await user.click(await screen.findByRole('button', { name: 'Paste' }));
     await user.click(screen.getByLabelText('Paste backup'));
     await user.paste(text);
-    await user.click(screen.getByRole('button', { name: 'Check backup' }));
+    await user.click(screen.getByRole('button', { name: 'Check' }));
 
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('This backup has 1 recipes, 0 lists');
@@ -101,15 +111,15 @@ describe('SettingsScreen', () => {
 
   it('explains a rejected backup', async () => {
     const { user } = renderRoutes(routes, '/settings');
-    await user.click(await screen.findByText('Or paste a backup'));
+    await user.click(await screen.findByRole('button', { name: 'Paste' }));
     await user.type(screen.getByLabelText('Paste backup'), 'hello');
-    await user.click(screen.getByRole('button', { name: 'Check backup' }));
+    await user.click(screen.getByRole('button', { name: 'Check' }));
     expect(await screen.findByText('That is not a valid backup file (not JSON).')).toBeInTheDocument();
   });
 
   it('rejects an oversized file by its size without reading it', async () => {
     const { user } = renderRoutes(routes, '/settings');
-    const input = (await screen.findByText('Import file')).querySelector('input') as HTMLInputElement;
+    const input = (await screen.findByText('Import')).querySelector('input') as HTMLInputElement;
     const big = new File(['x'], 'big.json', { type: 'application/json' });
     Object.defineProperty(big, 'size', { value: MAX_BACKUP_BYTES + 1 });
     const text = vi.fn(async () => 'x');

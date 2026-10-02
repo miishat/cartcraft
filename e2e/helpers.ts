@@ -16,6 +16,6 @@ export async function addRecipe(page: Page, title: string, ingredients: string, 
   await page.getByRole('button', { name: 'Parse ingredients' }).click();
   await page.getByLabel('Title').fill(title);
   await page.getByLabel('Base servings').fill(servings);
-  await page.getByRole('button', { name: 'Save recipe' }).click();
+  await page.getByRole('button', { name: 'Save' }).click();
   await expect(page.getByText(title)).toBeVisible();
 }

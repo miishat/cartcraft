@@ -19,7 +19,7 @@ describe('RecipeEditorScreen', () => {
 
     expect(screen.getByText('Review (2 lines)')).toBeInTheDocument();
     expect(screen.getByLabelText('Base servings')).toHaveValue(4);
-    const save = screen.getByRole('button', { name: 'Save recipe' });
+    const save = screen.getByRole('button', { name: 'Save' });
     expect(save).toBeDisabled();
 
     await user.type(screen.getByLabelText('Title'), 'Pancakes');
@@ -37,7 +37,7 @@ describe('RecipeEditorScreen', () => {
     await user.click(screen.getByRole('button', { name: 'Parse ingredients' }));
     await user.type(screen.getByLabelText('Title'), 'Egg');
     await user.clear(screen.getByLabelText('Base servings'));
-    expect(screen.getByRole('button', { name: 'Save recipe' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
   });
 
   it('shows a not-found message for a missing recipe instead of the form', async () => {
@@ -57,8 +57,8 @@ describe('RecipeEditorScreen', () => {
     expect(await screen.findByDisplayValue('Soup')).toBeInTheDocument();
     expect(screen.getByLabelText('Base servings')).toHaveValue(2);
 
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
     await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(screen.getByRole('button', { name: 'Delete recipe' }));
     await waitFor(() => expect(screen.getByTestId('location').textContent).toBe('/'));
     expect(await db.recipes.count()).toBe(0);
   });
@@ -69,9 +69,9 @@ describe('RecipeEditorScreen', () => {
     const id = await saveRecipe(db, { title: 'Soup', rawText: '1 onion', baseServings: 2, ingredients: draftLinesFromText('1 onion', ids) }, 1, ids);
     const { user } = renderRoutes(routes(), `/recipes/${id}`, db);
     await screen.findByDisplayValue('Soup');
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
     vi.spyOn(db.recipes, 'delete').mockRejectedValueOnce(new Error('disk full'));
     await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(screen.getByRole('button', { name: 'Delete recipe' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not delete the recipe. Try again.');
     expect(screen.getByTestId('location').textContent).toBe(`/recipes/${id}`);
   });
@@ -84,7 +84,7 @@ describe('RecipeEditorScreen', () => {
     const line = screen.getByLabelText('Ingredient line 1');
     await user.clear(line);
     await user.type(line, '2 cups milk');
-    await user.click(screen.getByRole('button', { name: 'Save recipe' }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => expect(screen.getByTestId('location').textContent).toBe('/'));
     const [recipe] = await db.recipes.toArray();

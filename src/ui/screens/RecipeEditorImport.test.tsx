@@ -33,7 +33,7 @@ describe('RecipeEditorScreen: import from link', () => {
     expect(screen.getByLabelText('Base servings')).toHaveValue(6);
     expect(screen.getByRole('link', { name: URL })).toHaveAttribute('href', URL);
 
-    await user.click(screen.getByRole('button', { name: 'Save recipe' }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(screen.getByTestId('location').textContent).toBe('/'));
     const [recipe] = await db.recipes.toArray();
     expect(recipe).toMatchObject({ title: 'Tacos', baseServings: 6, sourceUrl: URL, rawText: '1 lb ground beef\n8 tortillas' });

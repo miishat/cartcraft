@@ -10,12 +10,16 @@ import {
 } from '../../app/lists';
 import { groupListItems, listAsText } from '../../app/listView';
 import { updateSettings } from '../../data/db';
+import { PANTRY_CHECK_ICON, aisleIcon } from '../aisleIcons';
 import { ErrorNote } from '../components/ErrorNote';
+import { PromptDialog } from '../components/Dialog';
 import { ListItemRow } from '../components/ListItemRow';
 import { useDb } from '../db';
 import { useAisles, useSettings } from '../hooks';
 import { useAsyncAction } from '../useAsyncAction';
 import { useWakeLock, wakeLockSupported } from '../useWakeLock';
+
+const SECTION_HEADING = 'mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500';
 
 interface Props {
   makeId?: () => string;
@@ -38,6 +42,7 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
   const [adhoc, setAdhoc] = useState('');
   const [undo, setUndo] = useState<ListItem | null>(null);
   const [copied, setCopied] = useState(false);
+  const [renaming, setRenaming] = useState(false);
   const [canWakeLock] = useState(wakeLockSupported);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -113,11 +118,6 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
     });
   };
 
-  const onRename = () => {
-    const name = window.prompt('List name', list.name);
-    if (name?.trim()) void act.run(() => renameList(db, list.id, name));
-  };
-
   const row = (item: ListItem) => (
     <ListItemRow
       key={item.id}
@@ -139,7 +139,7 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
           <p className="text-sm text-slate-500">From {list.sources.map((s) => `${s.title} (${s.targetServings})`).join(', ')}</p>
         </div>
         <div className="flex shrink-0 gap-1">
-          <button type="button" onClick={onRename} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Rename list">
+          <button type="button" onClick={() => setRenaming(true)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Rename list">
             <Pencil size={18} />
           </button>
           <button
@@ -206,16 +206,19 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
       <ErrorNote message={sortAction.error ?? extrasAction.error} />
       {aiNote && <p role="status" className="text-sm text-slate-700">{aiNote}</p>}
 
-      {view.aisles.map((section) => (
-        <section key={section.id} aria-label={section.title}>
-          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{section.title}</h2>
-          <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200">{section.items.map(row)}</ul>
-        </section>
-      ))}
+      {view.aisles.map((section) => {
+        const Icon = aisleIcon(section.id);
+        return (
+          <section key={section.id} aria-label={section.title}>
+            <h2 className={SECTION_HEADING}><Icon size={16} className="text-emerald-700" /> {section.title}</h2>
+            <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200">{section.items.map(row)}</ul>
+          </section>
+        );
+      })}
 
       {view.pantry.length > 0 && (
         <section aria-label="Check pantry">
-          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Check pantry</h2>
+          <h2 className={SECTION_HEADING}><PANTRY_CHECK_ICON size={16} className="text-emerald-700" /> Check pantry</h2>
           <ul className="divide-y divide-slate-100 rounded-xl border border-dashed border-slate-300">{view.pantry.map(row)}</ul>
         </section>
       )}
@@ -245,6 +248,20 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
           <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-slate-600">In cart ({view.inCart.length})</summary>
           <ul className="divide-y divide-slate-100">{view.inCart.map(row)}</ul>
         </details>
+      )}
+
+      {renaming && (
+        <PromptDialog
+          title="Rename list"
+          label="List name"
+          initialValue={list.name}
+          confirmLabel="Save"
+          onCancel={() => setRenaming(false)}
+          onSubmit={(name) => {
+            setRenaming(false);
+            void act.run(() => renameList(db, list.id, name));
+          }}
+        />
       )}
 
       {undo && (
