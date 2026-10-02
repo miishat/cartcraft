@@ -18,6 +18,10 @@ async function seededList(): Promise<{ db: CartCraftDb; listId: string }> {
   return { db, listId };
 }
 
+async function openListMenu(user: { click: (el: Element) => Promise<void> }) {
+  await user.click(await screen.findByRole('button', { name: 'List options' }));
+}
+
 const routes = [
   { path: '/lists', element: <ListsScreen /> },
   { path: '/lists/:id', element: <ListScreen makeId={sequentialIds('new')} now={() => 50} undoMs={60_000} /> },
@@ -95,7 +99,8 @@ describe('ListScreen', () => {
     const prompt = vi.spyOn(window, 'prompt');
     const { db, listId } = await seededList();
     const { user } = renderRoutes(routes, `/lists/${listId}`, db);
-    await user.click(await screen.findByRole('button', { name: 'Rename list' }));
+    await openListMenu(user);
+    await user.click(screen.getByRole('menuitem', { name: 'Rename list' }));
     const dialog = screen.getByRole('dialog', { name: 'Rename list' });
     const input = within(dialog).getByLabelText('List name');
     await user.clear(input);
@@ -109,7 +114,8 @@ describe('ListScreen', () => {
   it('cancelling the rename dialog changes nothing', async () => {
     const { db, listId } = await seededList();
     const { user } = renderRoutes(routes, `/lists/${listId}`, db);
-    await user.click(await screen.findByRole('button', { name: 'Rename list' }));
+    await openListMenu(user);
+    await user.click(screen.getByRole('menuitem', { name: 'Rename list' }));
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Shopping list, Oct 1' })).toBeInTheDocument();
@@ -178,7 +184,8 @@ describe('ListScreen', () => {
     const { db, listId } = await seededList();
     const { user } = renderRoutes(routes, `/lists/${listId}`, db);
     const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
-    await user.click(await screen.findByRole('button', { name: 'Copy list as text' }));
+    await openListMenu(user);
+    await user.click(screen.getByRole('menuitem', { name: 'Copy list as text' }));
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining('Produce\n- Onions: 2'));
     expect(await screen.findByText('Copied to clipboard')).toBeInTheDocument();
   });

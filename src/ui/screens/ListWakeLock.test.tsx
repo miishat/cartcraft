@@ -24,23 +24,26 @@ afterEach(() => {
 });
 
 describe('ListScreen keep screen on', () => {
-  it('is hidden when the browser has no Screen Wake Lock', async () => {
+  it('is not in the list menu when the browser has no Screen Wake Lock', async () => {
     const { db, listId } = await seededList();
-    renderRoutes(routes, `/lists/${listId}`, db);
-    expect(await screen.findByRole('button', { name: 'Onions: 2' })).toBeInTheDocument();
-    expect(screen.queryByLabelText('Keep screen on')).toBeNull();
+    const { user } = renderRoutes(routes, `/lists/${listId}`, db);
+    await user.click(await screen.findByRole('button', { name: 'List options' }));
+    expect(screen.getByRole('menuitem', { name: 'Rename list' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitemcheckbox', { name: 'Keep screen on' })).toBeNull();
   });
 
-  it('saves the setting and holds the wake lock while on', async () => {
+  it('saves the setting from the list menu and holds the wake lock while on', async () => {
     const request = vi.fn(async () => ({ released: false, release: vi.fn(async () => undefined) }));
     Object.defineProperty(navigator, 'wakeLock', { value: { request }, configurable: true });
     const { db, listId } = await seededList();
     const { user } = renderRoutes(routes, `/lists/${listId}`, db);
-    const toggle = await screen.findByLabelText('Keep screen on');
-    expect(toggle).not.toBeChecked();
+    await user.click(await screen.findByRole('button', { name: 'List options' }));
+    const toggle = screen.getByRole('menuitemcheckbox', { name: 'Keep screen on' });
+    expect(toggle).toHaveAttribute('aria-checked', 'false');
     expect(request).not.toHaveBeenCalled();
     await user.click(toggle);
     await waitFor(async () => expect((await getSettings(db)).keepScreenOn).toBe(true));
     await waitFor(() => expect(request).toHaveBeenCalledWith('screen'));
+    expect(screen.getByRole('menuitemcheckbox', { name: 'Keep screen on' })).toHaveAttribute('aria-checked', 'true');
   });
 });
