@@ -1,7 +1,7 @@
 {
   "name": "cartcraft",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p worker",
     "dev:api": "vite build && wrangler dev --port 8788",
     "e2e": "playwright test",
-    "icons": "pwa-assets-generator"
+    "icons": "pwa-assets-generator",
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
     "dexie": "^4.4.6",

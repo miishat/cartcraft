@@ -4,6 +4,8 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-01
+
 ### Added
 - On iPhone and iPad in Safari, a banner explains that Safari and the installed app keep separate data and how to install CartCraft first.
 - "Keep screen on" on shopping lists stops the phone from dimming while you shop (where the browser supports it; on iPhone, in the installed app from iOS 18.4).
