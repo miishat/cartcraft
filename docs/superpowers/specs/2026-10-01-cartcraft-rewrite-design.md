@@ -266,6 +266,8 @@ CSP: `default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' da
 
 ### 9.5 Hosting
 
+Superseded (2026-10-01): hosting is now Cloudflare Workers with static assets (worker/index.ts, wrangler dev), not Pages.
+
 Cloudflare Pages, deployed with Wrangler. Local dev: `vite` for the UI, `wrangler pages dev` for the function, with Vite proxying `/api` to Wrangler. The Netlify comparison happens at deploy time; only `functions/api/import.ts` would change.
 
 ## 10. Testing

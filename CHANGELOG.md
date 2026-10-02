@@ -8,7 +8,7 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 
 ### Added
 - On iPhone and iPad in Safari, a banner explains that Safari and the installed app keep separate data and how to install CartCraft first.
-- "Keep screen on" on shopping lists stops the phone from dimming while you shop (where the browser supports it; on iPhone, in the installed app from iOS 18.4).
+- "Keep screen on" on shopping lists stops the phone from dimming while you shop (where the browser supports it; on iPhone, including the installed app from iOS 18.4).
 - Installable app that works offline after the first visit. When a new version is ready, a notice offers to reload (nothing changes until you choose), and Settings shows the version.
 - Security headers: a strict Content Security Policy that allows AI requests only to the four supported providers, plus caching rules so new versions are picked up.
 - Shopping lists can ask AI to sort items left in Other into aisles (remembered for next time, never overriding your own choices) and to suggest swaps and leftover tips.
