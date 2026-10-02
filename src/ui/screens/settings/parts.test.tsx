@@ -34,6 +34,11 @@ describe('SettingsRow', () => {
     expect(link).toHaveTextContent('How amounts show');
     expect(link).toHaveTextContent('US');
   });
+
+  it('shows an inset focus ring on the link', () => {
+    render(<MemoryRouter><ul><SettingsRow to="/settings/units" emoji="x" tint="blue" title="Units" /></ul></MemoryRouter>);
+    expect(screen.getByRole('link', { name: /^Units/ })).toHaveClass('focus-visible:ring-2', 'focus-visible:ring-inset', 'focus-visible:ring-emerald-600');
+  });
 });
 
 describe('ChoiceList', () => {
@@ -53,6 +58,11 @@ describe('ChoiceList', () => {
     expect(screen.getByRole('radio', { name: /^US/ })).toBeChecked();
     await user.click(screen.getByRole('radio', { name: /^Metric/ }));
     expect(onChange).toHaveBeenCalledWith('metric');
+  });
+
+  it('shows an inset focus ring on the row label', () => {
+    render(<ChoiceList name="units" legend="Unit system" choices={[{ value: 'us', label: 'US' }]} value="us" onChange={() => undefined} />);
+    expect(screen.getByRole('radio', { name: /^US/ }).closest('label')).toHaveClass('has-[:focus-visible]:ring-2', 'has-[:focus-visible]:ring-inset', 'has-[:focus-visible]:ring-emerald-600');
   });
 });
 

@@ -41,7 +41,9 @@ function download(text: string, fileName: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-const ROW = 'flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 has-[:focus-visible]:bg-slate-100';
+const ROW = 'flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left hover:bg-slate-50';
+const BUTTON_ROW = `${ROW} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600`;
+const LABEL_ROW = `${ROW} has-[:focus-visible]:bg-slate-100 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-inset has-[:focus-visible]:ring-emerald-600`;
 
 function RowContent({ emoji, tint, title, hint }: { emoji: string; tint: Tint; title: string; hint?: string }) {
   return (
@@ -60,7 +62,7 @@ function RowContent({ emoji, tint, title, hint }: { emoji: string; tint: Tint; t
 function ActionRow({ onClick, expanded, children }: { onClick: () => void; expanded?: boolean; children: ReactNode }) {
   return (
     <li>
-      <button type="button" onClick={onClick} aria-expanded={expanded} className={ROW}>{children}</button>
+      <button type="button" onClick={onClick} aria-expanded={expanded} className={BUTTON_ROW}>{children}</button>
     </li>
   );
 }
@@ -139,7 +141,7 @@ export function BackupPage({ now = Date.now }: { now?: () => number }) {
           </ActionRow>
         )}
         <li>
-          <label className={ROW}>
+          <label className={LABEL_ROW}>
             <RowContent emoji="📂" tint="blue" title="Import from file" />
             <input
               type="file"

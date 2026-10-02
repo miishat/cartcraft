@@ -24,7 +24,7 @@ export function ChoiceList<T extends string>({ name, legend, showLegend = false,
       <legend className={showLegend ? GROUP_LABEL : 'sr-only'}>{legend}</legend>
       <div className={CARD_LIST}>
         {choices.map((choice) => (
-          <label key={choice.value} className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-slate-50 has-[:focus-visible]:bg-slate-100">
+          <label key={choice.value} className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-slate-50 has-[:focus-visible]:bg-slate-100 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-inset has-[:focus-visible]:ring-emerald-600">
             <input
               type="radio"
               name={name}

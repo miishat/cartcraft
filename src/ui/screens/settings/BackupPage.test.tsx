@@ -30,6 +30,14 @@ describe('Backup and restore page', () => {
     click.mockRestore();
   });
 
+  it('shows inset focus rings on the action button and the import label', async () => {
+    renderRoutes(routes, '/settings/backup');
+    const button = await screen.findByRole('button', { name: /^Export backup/ });
+    expect(button).toHaveClass('focus-visible:ring-2', 'focus-visible:ring-inset', 'focus-visible:ring-emerald-600');
+    const label = (await screen.findByLabelText('Import from file')).closest('label');
+    expect(label).toHaveClass('has-[:focus-visible]:ring-2', 'has-[:focus-visible]:ring-inset', 'has-[:focus-visible]:ring-emerald-600');
+  });
+
   it('hides Share when the browser cannot share files', async () => {
     renderRoutes(routes, '/settings/backup');
     await screen.findByRole('button', { name: /^Export backup/ });

@@ -15,7 +15,7 @@ interface Props {
 export function SettingsRow({ to, emoji, tint, title, summary, value }: Props) {
   return (
     <li>
-      <Link to={to} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50">
+      <Link to={to} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600">
         <span aria-hidden="true" className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-base leading-none ${TINT_CLASS[tint]}`}>
           {emoji}
         </span>
