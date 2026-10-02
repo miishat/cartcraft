@@ -12,6 +12,7 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 - Dark theme. Settings has an Appearance choice: match the device, light or dark.
 
 ### Changed
+- The add item box on a shopping list now floats at the bottom of the screen, within thumb reach.
 - Shopping lists are grouped into cards, each aisle with its icon on a coloured badge, and quantities sit in a small pill on the right of each item.
 - Colours are warmer: cream backgrounds and brown-grey text instead of cool grey.
 - The scrollbar now follows the app colours in both themes.

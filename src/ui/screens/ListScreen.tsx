@@ -94,7 +94,7 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
 
   const view = groupListItems(list.items, aisles);
   // The filter only applies while the bar is visible (more than one aisle) and its aisle still has items; otherwise show everything.
-  const filtered = view.aisles.length > 1 && aisleFilter !== null &&view.aisles.some((s) => s.id === aisleFilter);
+  const filtered = view.aisles.length > 1 && aisleFilter !== null && view.aisles.some((s) => s.id === aisleFilter);
   const shownAisles = filtered ? view.aisles.filter((s) => s.id === aisleFilter) : view.aisles;
   const leftCount = view.aisles.reduce((n, s) => n + s.items.length, 0);
   const unknownCount = new Set(list.items.filter((i) => !i.checked && i.group === 'aisle' && i.aisleId === 'other').map((i) => i.itemKey)).size;
@@ -177,19 +177,6 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
       )}
       {copied && <p role="status" className="text-sm text-emerald-700">Copied to clipboard</p>}
       <ErrorNote message={act.error ?? copy.error} />
-
-      <form onSubmit={onAdd} className="flex gap-2">
-        <input
-          className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2"
-          placeholder="Add an item, e.g. paper towels"
-          aria-label="Add an item"
-          value={adhoc}
-          onChange={(e) => setAdhoc(e.target.value)}
-        />
-        <button type="submit" className="inline-flex items-center gap-1 rounded-lg bg-slate-900 px-3 py-2 text-white" aria-label="Add item">
-          <Plus size={18} />
-        </button>
-      </form>
 
       <div className="flex flex-wrap items-center gap-2 text-sm">
         {unknownCount > 0 && (
@@ -291,6 +278,24 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
         </details>
       )}
 
+      <form
+        onSubmit={onAdd}
+        className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-20 px-4 pb-3 md:bottom-0 md:pb-6"
+      >
+        <div className="mx-auto flex max-w-2xl items-center gap-2 rounded-2xl bg-white p-2 pl-4 shadow-lg ring-1 ring-slate-200 focus-within:ring-2 focus-within:ring-emerald-600">
+          <Plus size={18} className="shrink-0 text-slate-400" aria-hidden="true" />
+          <input
+            className="min-w-0 flex-1 bg-transparent py-1.5 outline-none"
+            placeholder="Add an item, e.g. paper towels"
+            aria-label="Add an item"
+            value={adhoc}
+            onChange={(e) => setAdhoc(e.target.value)}
+          />
+          <button type="submit" className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white" aria-label="Add item">
+            Add
+          </button>
+        </div>
+      </form>
       {renaming && (
         <PromptDialog
           title="Rename list"
@@ -306,7 +311,7 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
       )}
 
       {undo && (
-        <div role="status" className="fixed inset-x-0 bottom-20 mx-auto flex w-fit items-center gap-4 rounded-full bg-slate-900 px-4 py-2 text-sm text-white shadow-lg md:bottom-6">
+        <div role="status" className="fixed inset-x-0 bottom-[calc(8rem+env(safe-area-inset-bottom))] mx-auto flex w-fit items-center gap-4 rounded-full bg-slate-900 px-4 py-2 text-sm text-white shadow-lg md:bottom-24">
           Checked {undo.name}
           <button type="button" onClick={() => void undoCheck()} className="font-semibold text-emerald-300">Undo</button>
         </div>
