@@ -1,5 +1,6 @@
 import { BookOpen, ChefHat, ListChecks, Settings } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router';
+import { IosInstallBanner } from './components/IosInstallBanner';
 
 const TABS = [
   { to: '/', label: 'Recipes', icon: BookOpen, end: true },
@@ -32,6 +33,7 @@ export function Layout() {
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-6 pb-28 md:pb-10">
+        <IosInstallBanner />
         <Outlet />
       </main>
 
