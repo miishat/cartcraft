@@ -35,6 +35,16 @@ describe('RecipesScreen', () => {
     expect(screen.getByRole('button', { name: 'Build list (2)' })).toHaveTextContent('2 recipes · 3 ingredients');
   });
 
+  it('counts only ingredient lines on each row', async () => {
+    const db = createTestDb();
+    await addRecipe(db, 'Pasta', 'For the sauce:\n1 cup milk\n2 onions', 4);
+    await addRecipe(db, 'Soup', '2 carrots', 2);
+    renderRoutes(routes, '/', db);
+    const pasta = await screen.findByRole('link', { name: 'View Pasta' });
+    expect(pasta).toHaveTextContent('2 ingredients · serves 4');
+    expect(screen.getByRole('link', { name: 'View Soup' })).toHaveTextContent('1 ingredient · serves 2');
+  });
+
   it('shows an empty state', async () => {
     renderRoutes(routes, '/');
     expect(await screen.findByText(/No recipes yet/)).toBeInTheDocument();

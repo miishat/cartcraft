@@ -207,7 +207,7 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
       {aiNote && <p role="status" className="text-sm text-slate-700">{aiNote}</p>}
 
       {view.aisles.length > 1 && (
-        <div role="group" aria-label="Filter by aisle" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div role="group" aria-label="Filter by aisle" className="-mx-4 flex gap-2 overflow-x-auto px-4 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <button type="button" aria-pressed={!filtered} aria-label="Show all aisles" onClick={() => setAisleFilter(null)} className={pill(!filtered)}>
             All <span className="tabular-nums">{leftCount}</span>
           </button>
@@ -233,7 +233,7 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
         <section key={section.id} aria-label={section.title} className={CARD}>
           <h2 className={CARD_HEADING}>
             <AisleBadge aisleId={section.id} /> {section.title}
-            <span className="ml-auto text-xs font-normal text-slate-400">{section.items.length} left</span>
+            <span className="ml-auto text-xs font-normal text-slate-500">{section.items.length} left</span>
           </h2>
           <ul className="divide-y divide-slate-100">{section.items.map(row)}</ul>
         </section>
@@ -243,7 +243,7 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
         <section aria-label="Check pantry" className="overflow-hidden rounded-2xl border border-dashed border-slate-300 bg-white">
           <h2 className={CARD_HEADING}>
             <AisleBadge aisleId={PANTRY_CHECK_ID} /> Check pantry
-            <span className="ml-auto text-xs font-normal text-slate-400">Have it already?</span>
+            <span className="ml-auto text-xs font-normal text-slate-500">Have it already?</span>
           </h2>
           <ul className="divide-y divide-slate-100">{view.pantry.map(row)}</ul>
         </section>

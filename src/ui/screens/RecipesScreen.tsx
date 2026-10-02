@@ -92,7 +92,7 @@ export function RecipesScreen({ makeId = newId, now = Date.now }: Props) {
                     <span className="min-w-0">
                       <span className="block truncate font-semibold text-slate-900">{recipe.title}</span>
                       <span className="block text-xs text-slate-500">
-                        {recipe.ingredients.length} ingredients · serves {recipe.baseServings}
+                        {plural(recipe.ingredients.filter((l) => !l.isHeader).length, 'ingredient')} · serves {recipe.baseServings}
                       </span>
                     </span>
                   </Link>

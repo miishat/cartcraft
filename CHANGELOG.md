@@ -13,6 +13,7 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 - Dark theme. Settings has an Appearance choice: match the device, light or dark.
 
 ### Changed
+- Editing a recipe now starts from the recipe page; the Edit link is no longer on each row of the recipe list.
 - The recipe list is one card with a servings stepper on each selected recipe, and the Build list bar shows how many recipes and ingredients you picked.
 - The add item box on a shopping list now floats at the bottom of the screen, within thumb reach.
 - Shopping lists are grouped into cards, each aisle with its icon on a coloured badge, and quantities sit in a small pill on the right of each item.
@@ -38,6 +39,7 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 - Import a recipe from a link: paste a recipe page URL and CartCraft reads the recipe data the site publishes. If a site blocks the import or has no recipe data, the form switches to pasting the ingredients.
 
 ### Changed
+- Editing a recipe now starts from the recipe page; the Edit link is no longer on each row of the recipe list.
 - The app and recipe import are served by one Cloudflare Worker, and recipe import uses Cloudflare's rate limiter (10 imports per minute per address).
 
 ### Fixed
@@ -59,6 +61,7 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 - App shell with routing, responsive navigation and Tailwind CSS 4.
 
 ### Changed
+- Editing a recipe now starts from the recipe page; the Edit link is no longer on each row of the recipe list.
 - Replaced the AI Studio UI with the CartCraft app. README reset.
 
 ### Removed
