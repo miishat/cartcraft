@@ -55,6 +55,9 @@ describe('hasInventedNumber', () => {
     ['3 eggs', 'Crack the eggs', true],
     ['1 tsp salt', 'salt to taste', true],
     ['salt', 'salt to taste', false],
+    ['2 eggs', '12 eggs', true],
+    ['1 tsp salt', '10 g salt', true],
+    ['2 eggs', 'Use 2 eggs and 12 g butter', false],
   ])('%s in %j -> %s', (line, source, expected) => {
     expect(hasInventedNumber(line, source)).toBe(expected);
   });
@@ -94,6 +97,16 @@ describe('aiSortUnknownItems', () => {
 
     const body = JSON.parse(String((fetchImpl.mock.calls[0] as unknown as [string, RequestInit])[1].body));
     expect(JSON.parse(body.messages[1].content).items).toEqual(['dragon fruit', 'gochujang', 'birthday candle']);
+  });
+
+  it('leaves the list and overrides untouched when the AI reply is unusable', async () => {
+    const db = await configured();
+    const listId = await listWith(db, '1 dragon fruit');
+    const before = (await db.lists.get(listId))!.items;
+    const fetchImpl = reply({ nonsense: true });
+    await expect(aiSortUnknownItems(db, listId, fetchImpl)).rejects.toMatchObject({ kind: 'bad_response' });
+    expect((await db.lists.get(listId))!.items).toEqual(before);
+    expect(await db.aisleOverrides.toArray()).toEqual([]);
   });
 
   it('does not call the AI when nothing is in Other', async () => {

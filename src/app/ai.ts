@@ -42,7 +42,7 @@ const NUMBER = /\d+(?:[.,/]\d+)?/g;
 /** True when the line contains a number that does not appear anywhere in the source text. */
 export function hasInventedNumber(line: string, source: string): boolean {
   const haystack = normalizeText(source);
-  return (normalizeText(line).match(NUMBER) ?? []).some((n) => !haystack.includes(n));
+  return (normalizeText(line).match(NUMBER) ?? []).some((n) => !new RegExp(`(?<!\\d)${n.replace(/\./g, '\\.')}(?!\\d)`).test(haystack));
 }
 
 export interface AiDraft {
