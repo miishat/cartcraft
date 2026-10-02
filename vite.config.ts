@@ -1,6 +1,19 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
+import { headersFile } from './src/build/headers';
+import { providerOrigins } from './src/services/providers';
+
+/** Writes dist/_headers (CSP and caching rules) from the AI provider list. */
+function cloudflareHeaders(): Plugin {
+  return {
+    name: 'cartcraft-headers',
+    apply: 'build',
+    generateBundle() {
+      this.emitFile({ type: 'asset', fileName: '_headers', source: headersFile(providerOrigins()) });
+    },
+  };
+}
 
 export default defineConfig({
   server: {
@@ -8,5 +21,5 @@ export default defineConfig({
     // The recipe import endpoint runs under `npm run dev:api` (wrangler dev).
     proxy: { '/api': 'http://localhost:8788' },
   },
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), cloudflareHeaders()],
 });
