@@ -93,8 +93,8 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
   if (list === null) return <p className="text-slate-500">List not found.</p>;
 
   const view = groupListItems(list.items, aisles);
-  // A filter whose aisle has run out falls back to showing everything.
-  const filtered = aisleFilter !== null && view.aisles.some((s) => s.id === aisleFilter);
+  // The filter only applies while the bar is visible (more than one aisle) and its aisle still has items; otherwise show everything.
+  const filtered = view.aisles.length > 1 && aisleFilter !== null &&view.aisles.some((s) => s.id === aisleFilter);
   const shownAisles = filtered ? view.aisles.filter((s) => s.id === aisleFilter) : view.aisles;
   const leftCount = view.aisles.reduce((n, s) => n + s.items.length, 0);
   const unknownCount = new Set(list.items.filter((i) => !i.checked && i.group === 'aisle' && i.aisleId === 'other').map((i) => i.itemKey)).size;

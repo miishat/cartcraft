@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { createList } from '../../app/lists';
+import { createList, setItemChecked } from '../../app/lists';
 import { draftLinesFromText, saveRecipe } from '../../app/recipes';
 import type { CartCraftDb } from '../../data/db';
 import { createTestDb, sequentialIds } from '../../test/db';
@@ -64,6 +64,20 @@ describe('ListScreen', () => {
     await user.click(await screen.findByRole('button', { name: 'Show only Produce' }));
     await user.click(screen.getByRole('button', { name: 'Onions: 2' }));
     expect(await screen.findByRole('region', { name: 'Dairy & Eggs' })).toBeInTheDocument();
+  });
+
+  it('clears the aisle filter when only one aisle is left', async () => {
+    const { db, listId } = await seededList();
+    const { user } = renderRoutes(routes, `/lists/${listId}`, db);
+    await user.click(await screen.findByRole('button', { name: 'Show only Produce' }));
+    expect(screen.queryByRole('region', { name: 'Check pantry' })).not.toBeInTheDocument();
+    const list = await db.lists.get(listId);
+    const dairy = list!.items.filter((i) => i.group === 'aisle' && i.name.toLowerCase().includes('milk'));
+    expect(dairy).toHaveLength(1);
+    await act(async () => {
+      await setItemChecked(db, listId, dairy[0]!.id, true, 60);
+    });
+    expect(await screen.findByRole('region', { name: 'Check pantry' })).toBeInTheDocument();
   });
 
   it('shows shopping progress that follows checked items', async () => {
