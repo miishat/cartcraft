@@ -74,6 +74,15 @@ describe('aiCleanUpText', () => {
   });
 });
 
+describe('aiCleanUpText servings', () => {
+  it('drops AI servings that the source text never mentions', async () => {
+    const db = await configured();
+    const fetchImpl = reply({ title: 'Pancakes', servings: 4, ingredients: ['2 cups flour'] });
+    const draft = await aiCleanUpText(db, 'Grandma used 2 cups flour.', sequentialIds('l'), fetchImpl);
+    expect(draft.servings).toBeUndefined();
+  });
+});
+
 describe('aiSortUnknownItems', () => {
   it('moves Other items, remembers answers, and never overrides a user choice', async () => {
     const db = await configured();

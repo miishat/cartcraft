@@ -66,7 +66,9 @@ export async function aiCleanUpText(
     const line = parseIngredientLine(raw, makeId());
     return hasInventedNumber(raw, text) ? { ...line, needsReview: true } : line;
   });
-  return { title: cleaned.title, lines, ...(cleaned.servings ? { servings: cleaned.servings } : {}) };
+  // Servings the source never mentions would be invented, so they are dropped.
+  const servings = cleaned.servings && !hasInventedNumber(String(cleaned.servings), text) ? cleaned.servings : undefined;
+  return { title: cleaned.title, lines, ...(servings ? { servings } : {}) };
 }
 
 /**

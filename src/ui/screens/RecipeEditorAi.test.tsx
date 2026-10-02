@@ -66,6 +66,30 @@ describe('RecipeEditorScreen: AI', () => {
     expect(screen.getAllByLabelText('Check this line')).toHaveLength(1);
   });
 
+  it('keeps servings the user already entered', async () => {
+    const { user } = await setup();
+    await user.type(screen.getByLabelText('Ingredients'), 'Grandma used 2 cups flour and eggs');
+    await user.click(screen.getByRole('button', { name: 'Parse ingredients' }));
+    const field = await screen.findByLabelText('Base servings');
+    await user.clear(field);
+    await user.type(field, '6');
+    const button = await screen.findByRole('button', { name: 'Clean up with AI' });
+    await vi.waitFor(() => expect(button).toBeEnabled());
+    await user.click(button);
+    expect(await screen.findByText('Review (2 lines)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Base servings')).toHaveValue(6);
+    expect(screen.queryByText(/Check base servings/)).not.toBeInTheDocument();
+  });
+
+  it('warns to check servings when the AI supplied them', async () => {
+    const { user } = await setup();
+    await user.type(screen.getByLabelText('Ingredients'), 'Grandma used 2 cups flour and eggs');
+    const button = await screen.findByRole('button', { name: 'Clean up with AI' });
+    await vi.waitFor(() => expect(button).toBeEnabled());
+    await user.click(button);
+    expect(await screen.findByText(/Check base servings/)).toBeInTheDocument();
+  });
+
   it('shows the AI error and keeps the text', async () => {
     const { user } = await setup({ cleanUp: async () => { throw new LlmError('bad_response'); } });
     await user.type(screen.getByLabelText('Ingredients'), 'messy');

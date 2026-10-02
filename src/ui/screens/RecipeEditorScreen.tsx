@@ -87,8 +87,11 @@ export function RecipeEditorScreen({
 
   const applyAiDraft = (draft: AiDraft, text: string) => {
     setTitle((current) => current || draft.title);
-    setServings(String(draft.servings ?? (servings || settings.defaultServings)));
-    setServingsGuessed(draft.servings === undefined && !servings);
+    // The AI never overwrites servings the user already has; when it supplies them, ask for a check.
+    if (!servings.trim()) {
+      setServings(String(draft.servings ?? settings.defaultServings));
+      setServingsGuessed(true);
+    }
     setRawText(text);
     setLines(draft.lines);
   };
