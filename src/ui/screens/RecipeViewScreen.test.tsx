@@ -59,4 +59,10 @@ describe('RecipeViewScreen', () => {
     renderRoutes(routes, '/recipes/missing/view', createTestDb());
     expect(await screen.findByText('Recipe not found.')).toBeInTheDocument();
   });
+  it('shows the recipe cover next to the title', async () => {
+    const { db, id } = await seeded();
+    renderRoutes(routes, `/recipes/${id}/view`, db);
+    const heading = await screen.findByRole('heading', { name: 'Bread' });
+    expect(heading.parentElement?.querySelector('[data-recipe-cover]')).toHaveTextContent('🍞');
+  });
 });

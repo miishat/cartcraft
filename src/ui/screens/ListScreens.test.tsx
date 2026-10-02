@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { createList } from '../../app/lists';
+import { createList, setItemChecked } from '../../app/lists';
 import { draftLinesFromText, saveRecipe } from '../../app/recipes';
 import type { CartCraftDb } from '../../data/db';
 import { createTestDb, sequentialIds } from '../../test/db';
@@ -28,7 +28,8 @@ describe('ListsScreen', () => {
     const { db } = await seededList();
     const { user } = renderRoutes(routes, '/lists', db);
     expect(await screen.findByText('Shopping list, Oct 1')).toBeInTheDocument();
-    expect(screen.getByText('0 of 3 items checked')).toBeInTheDocument();
+    expect(screen.getByText('0 of 3 in cart')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: 'Shopping progress' })).toHaveAttribute('aria-valuenow', '0');
     await user.click(screen.getByRole('button', { name: 'Delete Shopping list, Oct 1' }));
     await user.click(await screen.findByRole('button', { name: 'Delete list' }));
     expect(await screen.findByText(/No lists yet/)).toBeInTheDocument();
@@ -36,6 +37,60 @@ describe('ListsScreen', () => {
 });
 
 describe('ListScreen', () => {
+  it('shows an icon badge on every aisle section and the pantry section', async () => {
+    const { db, listId } = await seededList();
+    renderRoutes(routes, `/lists/${listId}`, db);
+    for (const name of ['Produce', 'Dairy & Eggs', 'Check pantry']) {
+      const region = await screen.findByRole('region', { name });
+      expect(region.querySelector('[data-aisle-badge] svg')).not.toBeNull();
+    }
+  });
+
+  it('filters to one aisle and back', async () => {
+    const { db, listId } = await seededList();
+    const { user } = renderRoutes(routes, `/lists/${listId}`, db);
+    await user.click(await screen.findByRole('button', { name: 'Show only Produce' }));
+    expect(screen.getByRole('button', { name: 'Show only Produce' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('region', { name: 'Produce' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Dairy & Eggs' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Check pantry' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Show all aisles' }));
+    expect(screen.getByRole('region', { name: 'Dairy & Eggs' })).toBeInTheDocument();
+  });
+
+  it('goes back to all aisles when the filtered aisle runs out', async () => {
+    const { db, listId } = await seededList();
+    const { user } = renderRoutes(routes, `/lists/${listId}`, db);
+    await user.click(await screen.findByRole('button', { name: 'Show only Produce' }));
+    await user.click(screen.getByRole('button', { name: 'Onions: 2' }));
+    expect(await screen.findByRole('region', { name: 'Dairy & Eggs' })).toBeInTheDocument();
+  });
+
+  it('clears the aisle filter when only one aisle is left', async () => {
+    const { db, listId } = await seededList();
+    const { user } = renderRoutes(routes, `/lists/${listId}`, db);
+    await user.click(await screen.findByRole('button', { name: 'Show only Produce' }));
+    expect(screen.queryByRole('region', { name: 'Check pantry' })).not.toBeInTheDocument();
+    const list = await db.lists.get(listId);
+    const dairy = list!.items.filter((i) => i.group === 'aisle' && i.name.toLowerCase().includes('milk'));
+    expect(dairy).toHaveLength(1);
+    await act(async () => {
+      await setItemChecked(db, listId, dairy[0]!.id, true, 60);
+    });
+    expect(await screen.findByRole('region', { name: 'Check pantry' })).toBeInTheDocument();
+  });
+
+  it('shows shopping progress that follows checked items', async () => {
+    const { db, listId } = await seededList();
+    const { user } = renderRoutes(routes, `/lists/${listId}`, db);
+    const bar = await screen.findByRole('progressbar', { name: 'Shopping progress' });
+    expect(bar).toHaveAttribute('aria-valuenow', '0');
+    expect(screen.getByText('0 of 3 in cart')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Onions: 2' }));
+    await waitFor(() => expect(bar).toHaveAttribute('aria-valuenow', '1'));
+    expect(screen.getByText('1 of 3 in cart')).toBeInTheDocument();
+  });
+
   it('renames the list in an in-app dialog, not a browser prompt', async () => {
     const prompt = vi.spyOn(window, 'prompt');
     const { db, listId } = await seededList();

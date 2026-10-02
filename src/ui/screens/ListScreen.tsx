@@ -10,16 +10,21 @@ import {
 } from '../../app/lists';
 import { groupListItems, listAsText } from '../../app/listView';
 import { updateSettings } from '../../data/db';
-import { PANTRY_CHECK_ICON, aisleIcon } from '../aisleIcons';
+import { PANTRY_CHECK_ID } from '../aisleIcons';
+import { AisleBadge } from '../components/AisleBadge';
 import { ErrorNote } from '../components/ErrorNote';
 import { PromptDialog } from '../components/Dialog';
+import { ProgressBar } from '../components/ProgressBar';
 import { ListItemRow } from '../components/ListItemRow';
 import { useDb } from '../db';
 import { useAisles, useSettings } from '../hooks';
 import { useAsyncAction } from '../useAsyncAction';
 import { useWakeLock, wakeLockSupported } from '../useWakeLock';
 
-const SECTION_HEADING = 'mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500';
+const CARD = 'overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200';
+const CARD_HEADING = 'flex items-center gap-2.5 px-3 pb-1 pt-3 text-sm font-semibold text-slate-900';
+const pill = (on: boolean) =>
+  `inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold ${on ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200'}`;
 
 interface Props {
   makeId?: () => string;
@@ -43,6 +48,7 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
   const [undo, setUndo] = useState<ListItem | null>(null);
   const [copied, setCopied] = useState(false);
   const [renaming, setRenaming] = useState(false);
+  const [aisleFilter, setAisleFilter] = useState<string | null>(null);
   const [canWakeLock] = useState(wakeLockSupported);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -87,6 +93,10 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
   if (list === null) return <p className="text-slate-500">List not found.</p>;
 
   const view = groupListItems(list.items, aisles);
+  // The filter only applies while the bar is visible (more than one aisle) and its aisle still has items; otherwise show everything.
+  const filtered = view.aisles.length > 1 && aisleFilter !== null && view.aisles.some((s) => s.id === aisleFilter);
+  const shownAisles = filtered ? view.aisles.filter((s) => s.id === aisleFilter) : view.aisles;
+  const leftCount = view.aisles.reduce((n, s) => n + s.items.length, 0);
   const unknownCount = new Set(list.items.filter((i) => !i.checked && i.group === 'aisle' && i.aisleId === 'other').map((i) => i.itemKey)).size;
 
   const toggle = (item: ListItem) =>
@@ -132,25 +142,28 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
   );
 
   return (
-    <div className="mx-auto max-w-2xl space-y-5 pb-24">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900">{list.name}</h1>
-          <p className="text-sm text-slate-500">From {list.sources.map((s) => `${s.title} (${s.targetServings})`).join(', ')}</p>
+    <div className="mx-auto max-w-2xl space-y-4 pb-40">
+      <div className="space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-[28px] font-bold leading-tight tracking-tight text-slate-900">{list.name}</h1>
+            <p className="text-sm text-slate-500">From {list.sources.map((s) => `${s.title} (${s.targetServings})`).join(', ')}</p>
+          </div>
+          <div className="flex shrink-0 gap-1">
+            <button type="button" onClick={() => setRenaming(true)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Rename list">
+              <Pencil size={18} />
+            </button>
+            <button
+              type="button"
+              onClick={() => void copy.run(listAsText(list.name, list.items, aisles, settings.unitSystem))}
+              className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+              aria-label="Copy list as text"
+            >
+              <Copy size={18} />
+            </button>
+          </div>
         </div>
-        <div className="flex shrink-0 gap-1">
-          <button type="button" onClick={() => setRenaming(true)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Rename list">
-            <Pencil size={18} />
-          </button>
-          <button
-            type="button"
-            onClick={() => void copy.run(listAsText(list.name, list.items, aisles, settings.unitSystem))}
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
-            aria-label="Copy list as text"
-          >
-            <Copy size={18} />
-          </button>
-        </div>
+        <ProgressBar done={list.items.filter((i) => i.checked).length} total={list.items.length} />
       </div>
       {canWakeLock && (
         <label className="flex w-fit items-center gap-2 text-sm text-slate-600">
@@ -165,26 +178,13 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
       {copied && <p role="status" className="text-sm text-emerald-700">Copied to clipboard</p>}
       <ErrorNote message={act.error ?? copy.error} />
 
-      <form onSubmit={onAdd} className="flex gap-2">
-        <input
-          className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2"
-          placeholder="Add an item, e.g. paper towels"
-          aria-label="Add an item"
-          value={adhoc}
-          onChange={(e) => setAdhoc(e.target.value)}
-        />
-        <button type="submit" className="inline-flex items-center gap-1 rounded-lg bg-slate-900 px-3 py-2 text-white" aria-label="Add item">
-          <Plus size={18} />
-        </button>
-      </form>
-
       <div className="flex flex-wrap items-center gap-2 text-sm">
         {unknownCount > 0 && (
           <button
             type="button"
             onClick={() => void sortAction.run()}
             disabled={!hasAi || sortAction.pending}
-            className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 disabled:opacity-40"
+            className="inline-flex items-center gap-1 rounded-xl bg-white px-3 py-1.5 ring-1 ring-slate-200 disabled:opacity-40"
           >
             <Sparkles size={14} /> {sortAction.pending ? 'Sorting...' : `Sort ${unknownCount} unknown ${unknownCount === 1 ? 'item' : 'items'} with AI`}
           </button>
@@ -193,7 +193,7 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
           type="button"
           onClick={() => void extrasAction.run()}
           disabled={!hasAi || extrasAction.pending || list.items.length === 0}
-          className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 disabled:opacity-40"
+          className="inline-flex items-center gap-1 rounded-xl bg-white px-3 py-1.5 ring-1 ring-slate-200 disabled:opacity-40"
         >
           <Sparkles size={14} /> {extrasAction.pending ? 'Thinking...' : list.extras ? 'Refresh swaps & tips' : 'Add swaps & tips'}
         </button>
@@ -206,26 +206,54 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
       <ErrorNote message={sortAction.error ?? extrasAction.error} />
       {aiNote && <p role="status" className="text-sm text-slate-700">{aiNote}</p>}
 
-      {view.aisles.map((section) => {
-        const Icon = aisleIcon(section.id);
-        return (
-          <section key={section.id} aria-label={section.title}>
-            <h2 className={SECTION_HEADING}><Icon size={16} className="text-emerald-700" /> {section.title}</h2>
-            <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200">{section.items.map(row)}</ul>
-          </section>
-        );
-      })}
+      {view.aisles.length > 1 && (
+        <div role="group" aria-label="Filter by aisle" className="-mx-4 flex gap-2 overflow-x-auto px-4 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <button type="button" aria-pressed={!filtered} aria-label="Show all aisles" onClick={() => setAisleFilter(null)} className={pill(!filtered)}>
+            All <span className="tabular-nums">{leftCount}</span>
+          </button>
+          {view.aisles.map((section) => {
+            const on = filtered && aisleFilter === section.id;
+            return (
+              <button
+                key={section.id}
+                type="button"
+                aria-pressed={on}
+                aria-label={`Show only ${section.title}`}
+                onClick={() => setAisleFilter(section.id)}
+                className={pill(on)}
+              >
+                <AisleBadge aisleId={section.id} size="sm" /> {section.title} <span className="tabular-nums">{section.items.length}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-      {view.pantry.length > 0 && (
-        <section aria-label="Check pantry">
-          <h2 className={SECTION_HEADING}><PANTRY_CHECK_ICON size={16} className="text-emerald-700" /> Check pantry</h2>
-          <ul className="divide-y divide-slate-100 rounded-xl border border-dashed border-slate-300">{view.pantry.map(row)}</ul>
+      {shownAisles.map((section) => (
+        <section key={section.id} aria-label={section.title} className={CARD}>
+          <h2 className={CARD_HEADING}>
+            <AisleBadge aisleId={section.id} /> {section.title}
+            <span className="ml-auto text-xs font-normal text-slate-500">{section.items.length} left</span>
+          </h2>
+          <ul className="divide-y divide-slate-100">{section.items.map(row)}</ul>
+        </section>
+      ))}
+
+      {!filtered && view.pantry.length > 0 && (
+        <section aria-label="Check pantry" className="overflow-hidden rounded-2xl border border-dashed border-slate-300 bg-white">
+          <h2 className={CARD_HEADING}>
+            <AisleBadge aisleId={PANTRY_CHECK_ID} /> Check pantry
+            <span className="ml-auto text-xs font-normal text-slate-500">Have it already?</span>
+          </h2>
+          <ul className="divide-y divide-slate-100">{view.pantry.map(row)}</ul>
         </section>
       )}
 
-      {list.extras && (list.extras.swaps.length > 0 || list.extras.tips.length > 0) && (
-        <section aria-label="Swaps & tips" className="space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-          <h2 className="text-xs font-semibold uppercase tracking-wide">Swaps & tips (AI suggestions)</h2>
+      {!filtered && list.extras && (list.extras.swaps.length > 0 || list.extras.tips.length > 0) && (
+        <section aria-label="Swaps & tips" className="space-y-2 rounded-2xl bg-linear-to-br from-tint-purple-bg to-tint-amber-bg p-4 text-sm text-slate-700">
+          <h2 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-tint-purple-fg">
+            <Sparkles size={14} aria-hidden="true" /> Swaps & tips (AI suggestions)
+          </h2>
           {list.extras.swaps.length > 0 && (
             <ul className="space-y-1">
               {list.extras.swaps.map((s, i) => (
@@ -244,12 +272,30 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
       )}
 
       {view.inCart.length > 0 && (
-        <details className="rounded-xl border border-slate-200 bg-slate-50" aria-label="In cart">
-          <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-slate-600">In cart ({view.inCart.length})</summary>
+        <details className={CARD} aria-label="In cart">
+          <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-slate-600">In cart ({view.inCart.length})</summary>
           <ul className="divide-y divide-slate-100">{view.inCart.map(row)}</ul>
         </details>
       )}
 
+      <form
+        onSubmit={onAdd}
+        className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-20 px-4 pb-3 md:bottom-0 md:pb-6"
+      >
+        <div className="mx-auto flex max-w-2xl items-center gap-2 rounded-2xl bg-white p-2 pl-4 shadow-lg ring-1 ring-slate-200 focus-within:ring-2 focus-within:ring-emerald-600">
+          <Plus size={18} className="shrink-0 text-slate-400" aria-hidden="true" />
+          <input
+            className="min-w-0 flex-1 bg-transparent py-1.5 outline-none"
+            placeholder="Add an item, e.g. paper towels"
+            aria-label="Add an item"
+            value={adhoc}
+            onChange={(e) => setAdhoc(e.target.value)}
+          />
+          <button type="submit" className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white" aria-label="Add item">
+            Add
+          </button>
+        </div>
+      </form>
       {renaming && (
         <PromptDialog
           title="Rename list"
@@ -265,7 +311,7 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
       )}
 
       {undo && (
-        <div role="status" className="fixed inset-x-0 bottom-20 mx-auto flex w-fit items-center gap-4 rounded-full bg-slate-900 px-4 py-2 text-sm text-white shadow-lg md:bottom-6">
+        <div role="status" className="fixed inset-x-0 bottom-[calc(9.25rem+env(safe-area-inset-bottom))] mx-auto flex w-fit items-center gap-4 rounded-full bg-slate-900 px-4 py-2 text-sm text-white shadow-lg md:bottom-28">
           Checked {undo.name}
           <button type="button" onClick={() => void undoCheck()} className="font-semibold text-emerald-300">Undo</button>
         </div>

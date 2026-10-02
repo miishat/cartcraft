@@ -3,6 +3,7 @@ import { ArrowLeft, Pencil } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { formatAmount, scaleLine, type IngredientLine, type UnitSystem } from '../../domain';
+import { RecipeCover } from '../components/RecipeCover';
 import { ServingsStepper } from '../components/ServingsStepper';
 import { useDb } from '../db';
 import { useSettings } from '../hooks';
@@ -45,7 +46,10 @@ export function RecipeViewScreen() {
         <ArrowLeft size={16} /> Recipes
       </Link>
       <div className="flex items-start justify-between gap-3">
-        <h1 className="text-2xl font-semibold text-slate-900">{recipe.title}</h1>
+        <div className="flex min-w-0 items-center gap-4">
+          <RecipeCover recipe={recipe} size="lg" />
+          <h1 className="text-[28px] font-bold leading-tight tracking-tight text-slate-900">{recipe.title}</h1>
+        </div>
         <Link
           to={`/recipes/${recipe.id}`}
           className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
@@ -64,7 +68,7 @@ export function RecipeViewScreen() {
 
       <section aria-label="Ingredients" className="space-y-2">
         <h2 className="text-sm font-medium text-slate-700">Ingredients</h2>
-        <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
+        <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200">
           {lines.map((line) =>
             line.isHeader ? (
               <li key={line.id} className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{line.raw}</li>

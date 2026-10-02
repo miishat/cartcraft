@@ -16,6 +16,28 @@
   --color-slate-800: #2e2924;
   --color-slate-900: #1f1b17;
   --color-slate-950: #120f0c;
+
+  /* Soft tints for aisle badges and recipe covers. Each has a background and a foreground. */
+  --color-tint-green-bg: #e3f1e7;
+  --color-tint-green-fg: #2f7352;
+  --color-tint-red-bg: #fbe4df;
+  --color-tint-red-fg: #a8432c;
+  --color-tint-blue-bg: #e6edf7;
+  --color-tint-blue-fg: #3f6496;
+  --color-tint-amber-bg: #fbefd2;
+  --color-tint-amber-fg: #9a6a12;
+  --color-tint-orange-bg: #fde6d2;
+  --color-tint-orange-fg: #b0581c;
+  --color-tint-purple-bg: #eee6f6;
+  --color-tint-purple-fg: #6b4fa8;
+  --color-tint-teal-bg: #dcf0ee;
+  --color-tint-teal-fg: #2d7470;
+  --color-tint-sky-bg: #dff0f8;
+  --color-tint-sky-fg: #2f6f8f;
+  --color-tint-rose-bg: #f9e3ea;
+  --color-tint-rose-fg: #a33f62;
+  --color-tint-gray-bg: #ede8e1;
+  --color-tint-gray-fg: #6b6158;
 }
 
 /*
@@ -66,6 +88,27 @@
   --color-red-600: #f87171;
   --color-red-700: #fca5a5;
   --color-red-800: #fecaca;
+
+  --color-tint-green-bg: #1d3328;
+  --color-tint-green-fg: #8fd1ad;
+  --color-tint-red-bg: #3d221c;
+  --color-tint-red-fg: #f0a28f;
+  --color-tint-blue-bg: #1f2a3b;
+  --color-tint-blue-fg: #9dbbe6;
+  --color-tint-amber-bg: #3a2f17;
+  --color-tint-amber-fg: #f0c86a;
+  --color-tint-orange-bg: #3d2818;
+  --color-tint-orange-fg: #f4ad7a;
+  --color-tint-purple-bg: #2e2440;
+  --color-tint-purple-fg: #c8b2ec;
+  --color-tint-teal-bg: #173432;
+  --color-tint-teal-fg: #8fd6cf;
+  --color-tint-sky-bg: #17303c;
+  --color-tint-sky-fg: #93cde6;
+  --color-tint-rose-bg: #3b1f29;
+  --color-tint-rose-fg: #ef9fbb;
+  --color-tint-gray-bg: #2b2724;
+  --color-tint-gray-fg: #bdb4aa;
 }
 
 html {

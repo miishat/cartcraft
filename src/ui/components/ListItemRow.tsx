@@ -28,7 +28,7 @@ export function ListItemRow({ item, aisles, unitSystem, onToggle, onEdit, onDele
   };
 
   return (
-    <li className="rounded-lg bg-white">
+    <li className="bg-white">
       <div className="flex items-stretch">
         <button
           type="button"
@@ -42,9 +42,13 @@ export function ListItemRow({ item, aisles, unitSystem, onToggle, onEdit, onDele
           </span>
           <span className={`min-w-0 flex-1 ${item.checked ? 'text-slate-400 line-through' : 'text-slate-800'}`}>
             <span className="font-medium">{item.name.charAt(0).toUpperCase() + item.name.slice(1)}</span>
-            {amount && <span className="ml-2 text-slate-500">{amount}</span>}
             {item.notes && <span className="block text-xs text-slate-400">{item.notes}</span>}
           </span>
+          {amount && (
+            <span className={`shrink-0 rounded-md bg-slate-100 px-2 py-0.5 text-sm tabular-nums ${item.checked ? 'text-slate-400' : 'text-slate-600'}`}>
+              {amount}
+            </span>
+          )}
         </button>
         <button type="button" onClick={toggleMenu} className="px-3 text-slate-400" aria-label={`Options for ${item.name}`} aria-expanded={open}>
           <MoreHorizontal size={18} />
