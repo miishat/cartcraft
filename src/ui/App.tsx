@@ -1,3 +1,4 @@
+import { AislesPage } from './screens/settings/AislesPage';
 import { AppearancePage } from './screens/settings/AppearancePage';
 import { ServingsPage } from './screens/settings/ServingsPage';
 import { UnitsPage } from './screens/settings/UnitsPage';
@@ -25,6 +26,7 @@ export function AppRoutes() {
         <Route path="settings/appearance" element={<AppearancePage />} />
         <Route path="settings/units" element={<UnitsPage />} />
         <Route path="settings/servings" element={<ServingsPage />} />
+        <Route path="settings/aisles" element={<AislesPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
