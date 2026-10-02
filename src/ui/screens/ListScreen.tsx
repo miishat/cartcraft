@@ -194,7 +194,7 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
         </button>
         {!hasAi && (
           <span className="text-xs text-slate-500">
-            <Link to="/settings" className="underline">Add an AI key in Settings</Link> to use these.
+            <Link to="/settings/ai" className="underline">Add an AI key in Settings</Link> to use these.
           </span>
         )}
       </div>

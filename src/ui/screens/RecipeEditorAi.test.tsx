@@ -49,7 +49,7 @@ describe('RecipeEditorScreen: AI', () => {
     const { user } = await setup({ withKey: false });
     await user.type(screen.getByLabelText('Ingredients'), 'some messy text');
     expect(await screen.findByRole('button', { name: 'Clean up with AI' })).toBeDisabled();
-    expect(screen.getByRole('link', { name: 'Add an AI key in Settings' })).toHaveAttribute('href', '/settings');
+    expect(screen.getByRole('link', { name: 'Add an AI key in Settings' })).toHaveAttribute('href', '/settings/ai');
   });
 
   it('cleans up pasted text into reviewed lines', async () => {

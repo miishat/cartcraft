@@ -92,6 +92,6 @@ describe('ListScreen: AI', () => {
     render(db, listId, reply({}));
     expect(await screen.findByRole('button', { name: 'Add swaps & tips' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Sort 1 unknown item with AI' })).toBeDisabled();
-    expect(screen.getByRole('link', { name: 'Add an AI key in Settings' })).toHaveAttribute('href', '/settings');
+    expect(screen.getByRole('link', { name: 'Add an AI key in Settings' })).toHaveAttribute('href', '/settings/ai');
   });
 });
