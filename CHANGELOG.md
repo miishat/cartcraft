@@ -5,6 +5,7 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 ## [Unreleased]
 
 ### Added
+- Shopping lists show a progress bar with how many items are in the cart, on the list itself and in Lists.
 - Each aisle on a shopping list now has its own icon next to its name.
 - Recipes can be opened in the app (View on the recipe list): ingredients, a servings stepper that scales the amounts, and the source link.
 - Dark theme. Settings has an Appearance choice: match the device, light or dark.

@@ -13,6 +13,7 @@ import { updateSettings } from '../../data/db';
 import { PANTRY_CHECK_ID, aisleIcon } from '../aisleIcons';
 import { ErrorNote } from '../components/ErrorNote';
 import { PromptDialog } from '../components/Dialog';
+import { ProgressBar } from '../components/ProgressBar';
 import { ListItemRow } from '../components/ListItemRow';
 import { useDb } from '../db';
 import { useAisles, useSettings } from '../hooks';
@@ -133,25 +134,28 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
   );
 
   return (
-    <div className="mx-auto max-w-2xl space-y-5 pb-24">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900">{list.name}</h1>
-          <p className="text-sm text-slate-500">From {list.sources.map((s) => `${s.title} (${s.targetServings})`).join(', ')}</p>
+    <div className="mx-auto max-w-2xl space-y-4 pb-40">
+      <div className="space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-[28px] font-bold leading-tight tracking-tight text-slate-900">{list.name}</h1>
+            <p className="text-sm text-slate-500">From {list.sources.map((s) => `${s.title} (${s.targetServings})`).join(', ')}</p>
+          </div>
+          <div className="flex shrink-0 gap-1">
+            <button type="button" onClick={() => setRenaming(true)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Rename list">
+              <Pencil size={18} />
+            </button>
+            <button
+              type="button"
+              onClick={() => void copy.run(listAsText(list.name, list.items, aisles, settings.unitSystem))}
+              className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+              aria-label="Copy list as text"
+            >
+              <Copy size={18} />
+            </button>
+          </div>
         </div>
-        <div className="flex shrink-0 gap-1">
-          <button type="button" onClick={() => setRenaming(true)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Rename list">
-            <Pencil size={18} />
-          </button>
-          <button
-            type="button"
-            onClick={() => void copy.run(listAsText(list.name, list.items, aisles, settings.unitSystem))}
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
-            aria-label="Copy list as text"
-          >
-            <Copy size={18} />
-          </button>
-        </div>
+        <ProgressBar done={list.items.filter((i) => i.checked).length} total={list.items.length} />
       </div>
       {canWakeLock && (
         <label className="flex w-fit items-center gap-2 text-sm text-slate-600">

@@ -3,6 +3,7 @@ import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { deleteList } from '../../app/lists';
+import { ProgressBar } from '../components/ProgressBar';
 import { ConfirmDialog } from '../components/Dialog';
 import { useDb } from '../db';
 
@@ -15,34 +16,29 @@ export function ListsScreen() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
-      <h1 className="text-2xl font-semibold text-slate-900">Lists</h1>
+      <h1 className="text-[28px] font-bold tracking-tight text-slate-900">Lists</h1>
       {lists.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-500">
+        <p className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-slate-500">
           No lists yet. Select recipes and build one.
         </p>
       ) : (
-        <ul className="space-y-2">
-          {lists.map((list) => {
-            const checked = list.items.filter((i) => i.checked).length;
-            return (
-              <li key={list.id} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3">
-                <Link to={`/lists/${list.id}`} className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-slate-900">{list.name}</p>
-                  <p className="text-xs text-slate-500">
-                    {checked} of {list.items.length} items checked
-                  </p>
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setToDelete({ id: list.id, name: list.name })}
-                  className="p-2 text-slate-400 hover:text-red-600"
-                  aria-label={`Delete ${list.name}`}
-                >
-                  <Trash2 size={16} />
-                </button>
-              </li>
-            );
-          })}
+        <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200">
+          {lists.map((list) => (
+            <li key={list.id} className="flex items-center gap-3 px-4 py-3">
+              <Link to={`/lists/${list.id}`} className="min-w-0 flex-1 space-y-2">
+                <p className="truncate font-semibold text-slate-900">{list.name}</p>
+                <ProgressBar done={list.items.filter((i) => i.checked).length} total={list.items.length} />
+              </Link>
+              <button
+                type="button"
+                onClick={() => setToDelete({ id: list.id, name: list.name })}
+                className="p-2 text-slate-400 hover:text-red-600"
+                aria-label={`Delete ${list.name}`}
+              >
+                <Trash2 size={16} />
+              </button>
+            </li>
+          ))}
         </ul>
       )}
       {toDelete && (

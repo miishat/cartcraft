@@ -28,7 +28,8 @@ describe('ListsScreen', () => {
     const { db } = await seededList();
     const { user } = renderRoutes(routes, '/lists', db);
     expect(await screen.findByText('Shopping list, Oct 1')).toBeInTheDocument();
-    expect(screen.getByText('0 of 3 items checked')).toBeInTheDocument();
+    expect(screen.getByText('0 of 3 in cart')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: 'Shopping progress' })).toHaveAttribute('aria-valuenow', '0');
     await user.click(screen.getByRole('button', { name: 'Delete Shopping list, Oct 1' }));
     await user.click(await screen.findByRole('button', { name: 'Delete list' }));
     expect(await screen.findByText(/No lists yet/)).toBeInTheDocument();
@@ -36,6 +37,17 @@ describe('ListsScreen', () => {
 });
 
 describe('ListScreen', () => {
+  it('shows shopping progress that follows checked items', async () => {
+    const { db, listId } = await seededList();
+    const { user } = renderRoutes(routes, `/lists/${listId}`, db);
+    const bar = await screen.findByRole('progressbar', { name: 'Shopping progress' });
+    expect(bar).toHaveAttribute('aria-valuenow', '0');
+    expect(screen.getByText('0 of 3 in cart')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Onions: 2' }));
+    await waitFor(() => expect(bar).toHaveAttribute('aria-valuenow', '1'));
+    expect(screen.getByText('1 of 3 in cart')).toBeInTheDocument();
+  });
+
   it('renames the list in an in-app dialog, not a browser prompt', async () => {
     const prompt = vi.spyOn(window, 'prompt');
     const { db, listId } = await seededList();
