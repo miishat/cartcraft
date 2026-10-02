@@ -1,10 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { CheckCircle2, Circle, Plus, ShoppingCart } from 'lucide-react';
+import { Check, Plus, ShoppingBasket } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { newId } from '../../app/ids';
 import { createList } from '../../app/lists';
 import { ErrorNote } from '../components/ErrorNote';
+import { RecipeCover } from '../components/RecipeCover';
 import { ServingsStepper } from '../components/ServingsStepper';
 import { useDb } from '../db';
 import { useSettings } from '../hooks';
@@ -37,6 +38,11 @@ export function RecipesScreen({ makeId = newId, now = Date.now }: Props) {
 
   const visible = recipes.filter((r) => r.title.toLowerCase().includes(query.trim().toLowerCase()));
 
+  const ingredientCount = recipes
+    .filter((r) => selected.has(r.id))
+    .reduce((n, r) => n + r.ingredients.filter((l) => !l.isHeader).length, 0);
+  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
   const toggle = (id: string) => {
     setSelected((prev) => {
       const next = new Map(prev);
@@ -51,66 +57,61 @@ export function RecipesScreen({ makeId = newId, now = Date.now }: Props) {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4 pb-28">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-900">Recipes</h1>
-        <Link to="/recipes/new" className="inline-flex items-center gap-1 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white">
+    <div className="mx-auto max-w-2xl space-y-4 pb-36">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-[28px] font-bold tracking-tight text-slate-900">Recipes</h1>
+          {recipes.length > 0 && <p className="text-sm text-slate-500">Pick recipes for your next list</p>}
+        </div>
+        <Link to="/recipes/new" className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-white px-3 py-2 text-sm font-medium text-slate-800 ring-1 ring-slate-200">
           <Plus size={16} /> Add recipe
         </Link>
       </div>
 
       {recipes.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-500">
+        <p className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-slate-500">
           No recipes yet. Add one to start building shopping lists.
         </p>
       ) : (
         <>
           <input
             type="search"
-            className="w-full rounded-lg border border-slate-200 px-3 py-2"
+            className="w-full rounded-xl px-4 py-2.5 ring-1 ring-slate-200 outline-none focus:ring-2 focus:ring-emerald-600"
             placeholder="Search recipes"
             aria-label="Search recipes"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <ul className="space-y-2">
+          <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200">
             {visible.map((recipe) => {
               const isSelected = selected.has(recipe.id);
               return (
-                <li key={recipe.id} className={`rounded-xl border p-3 ${isSelected ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200 bg-white'}`}>
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => toggle(recipe.id)}
-                      aria-pressed={isSelected}
-                      aria-label={`Select ${recipe.title}`}
-                      className="shrink-0"
-                    >
-                      {isSelected ? <CheckCircle2 className="text-emerald-700" /> : <Circle className="text-slate-300" />}
-                    </button>
-                    <div className="min-w-0 flex-1">
-                      <Link to={`/recipes/${recipe.id}/view`} className="block truncate font-medium text-slate-900 hover:underline">
-                        {recipe.title}
-                      </Link>
-                      <p className="text-xs text-slate-500">
+                <li key={recipe.id} className={`flex items-center gap-3 px-3 py-3 ${isSelected ? 'bg-emerald-50' : ''}`}>
+                  <Link to={`/recipes/${recipe.id}/view`} aria-label={`View ${recipe.title}`} className="flex min-w-0 flex-1 items-center gap-3">
+                    <RecipeCover recipe={recipe} />
+                    <span className="min-w-0">
+                      <span className="block truncate font-semibold text-slate-900">{recipe.title}</span>
+                      <span className="block text-xs text-slate-500">
                         {recipe.ingredients.length} ingredients · serves {recipe.baseServings}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-3 text-sm font-medium text-slate-600">
-                      <Link to={`/recipes/${recipe.id}/view`} aria-label={`View ${recipe.title}`}>View</Link>
-                      <Link to={`/recipes/${recipe.id}`} aria-label={`Edit ${recipe.title}`}>Edit</Link>
-                    </div>
-                  </div>
+                      </span>
+                    </span>
+                  </Link>
                   {isSelected && (
-                    <div className="mt-2 flex items-center gap-2 pl-9 text-sm text-slate-600">
-                      Make for
-                      <ServingsStepper
-                        value={selected.get(recipe.id) ?? settings.defaultServings}
-                        onChange={(n) => setServings(recipe.id, n)}
-                        label={recipe.title}
-                      />
-                    </div>
+                    <ServingsStepper
+                      value={selected.get(recipe.id) ?? settings.defaultServings}
+                      onChange={(n) => setServings(recipe.id, n)}
+                      label={recipe.title}
+                    />
                   )}
+                  <button
+                    type="button"
+                    onClick={() => toggle(recipe.id)}
+                    aria-pressed={isSelected}
+                    aria-label={`Select ${recipe.title}`}
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 ${isSelected ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-300'}`}
+                  >
+                    {isSelected && <Check size={16} aria-hidden="true" />}
+                  </button>
                 </li>
               );
             })}
@@ -119,15 +120,19 @@ export function RecipesScreen({ makeId = newId, now = Date.now }: Props) {
       )}
 
       {selected.size > 0 && (
-        <div className="fixed inset-x-0 bottom-20 flex flex-col items-center gap-2 px-4 md:bottom-6">
+        <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-20 flex flex-col items-center gap-2 px-4 pb-3 md:bottom-0 md:pb-6">
           <ErrorNote message={build.error} className="rounded-lg bg-red-50 px-3 py-2 shadow" />
           <button
             type="button"
             onClick={() => void build.run()}
             disabled={build.pending}
-            className="inline-flex items-center gap-2 rounded-full bg-emerald-800 px-6 py-3 font-medium text-white shadow-lg disabled:opacity-50"
+            aria-label={`Build list (${selected.size})`}
+            className="mx-auto flex w-full max-w-2xl items-center gap-3 rounded-2xl bg-slate-900 px-4 py-3.5 font-semibold text-white shadow-lg disabled:opacity-50"
           >
-            <ShoppingCart size={18} /> Build list ({selected.size})
+            <ShoppingBasket size={18} aria-hidden="true" /> Build list
+            <span className="ml-auto text-sm font-normal text-slate-300">
+              {plural(selected.size, 'recipe')} · {plural(ingredientCount, 'ingredient')}
+            </span>
           </button>
         </div>
       )}

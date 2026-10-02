@@ -16,6 +16,25 @@ async function addRecipe(db: CartCraftDb, title: string, text: string, baseServi
 const routes = [{ path: '/', element: <RecipesScreen makeId={sequentialIds('new')} now={() => 5} /> }];
 
 describe('RecipesScreen', () => {
+  it('shows an emoji cover on each recipe', async () => {
+    const db = createTestDb();
+    await addRecipe(db, 'Tacos', '1 onion');
+    renderRoutes(routes, '/', db);
+    const link = await screen.findByRole('link', { name: 'View Tacos' });
+    expect(link.querySelector('[data-recipe-cover]')).toHaveTextContent('🌮');
+  });
+
+  it('summarises the selection on the Build list bar', async () => {
+    const db = createTestDb();
+    await addRecipe(db, 'Tacos', '1 cup milk\n2 onions');
+    await addRecipe(db, 'Soup', '2 carrots');
+    const { user } = renderRoutes(routes, '/', db);
+    await user.click(await screen.findByRole('button', { name: 'Select Tacos' }));
+    expect(screen.getByRole('button', { name: 'Build list (1)' })).toHaveTextContent('1 recipe · 2 ingredients');
+    await user.click(screen.getByRole('button', { name: 'Select Soup' }));
+    expect(screen.getByRole('button', { name: 'Build list (2)' })).toHaveTextContent('2 recipes · 3 ingredients');
+  });
+
   it('shows an empty state', async () => {
     renderRoutes(routes, '/');
     expect(await screen.findByText(/No recipes yet/)).toBeInTheDocument();
