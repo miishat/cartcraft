@@ -4,6 +4,9 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Changed
+- Aisles on shopping lists show a food emoji (🥕 🥩 🥛 🥐 ...) on their coloured badge instead of a line icon.
+
 ## [0.3.0] - 2026-10-02
 
 ### Added

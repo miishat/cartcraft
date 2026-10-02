@@ -37,12 +37,12 @@ describe('ListsScreen', () => {
 });
 
 describe('ListScreen', () => {
-  it('shows an icon badge on every aisle section and the pantry section', async () => {
+  it('shows an emoji badge on every aisle section and the pantry section', async () => {
     const { db, listId } = await seededList();
     renderRoutes(routes, `/lists/${listId}`, db);
-    for (const name of ['Produce', 'Dairy & Eggs', 'Check pantry']) {
+    for (const [name, emoji] of [['Produce', '🥕'], ['Dairy & Eggs', '🥛'], ['Check pantry', '🫙']] as const) {
       const region = await screen.findByRole('region', { name });
-      expect(region.querySelector('[data-aisle-badge] svg')).not.toBeNull();
+      expect(region.querySelector('[data-aisle-badge]')).toHaveTextContent(emoji);
     }
   });
 
