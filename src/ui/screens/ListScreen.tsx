@@ -15,6 +15,7 @@ import { AisleBadge } from '../components/AisleBadge';
 import { ErrorNote } from '../components/ErrorNote';
 import { PromptDialog } from '../components/Dialog';
 import { ProgressBar } from '../components/ProgressBar';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { ListItemRow } from '../components/ListItemRow';
 import { Menu, MenuCheckbox, MenuItem } from '../components/Menu';
 import { useDb } from '../db';
@@ -145,12 +146,11 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
   return (
     <div className="mx-auto max-w-2xl space-y-4 pb-40">
       <div className="space-y-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="text-[28px] font-bold leading-tight tracking-tight text-slate-900">{list.name}</h1>
-            <p className="text-sm text-slate-500">From {list.sources.map((s) => `${s.title} (${s.targetServings})`).join(', ')}</p>
-          </div>
-          <div className="shrink-0">
+        <ScreenHeader
+          title={list.name}
+          back={{ to: '/lists', label: 'Lists' }}
+          subtitle={`From ${list.sources.map((s) => `${s.title} (${s.targetServings})`).join(', ')}`}
+          actions={
             <Menu label="List options">
               <MenuItem icon="✏️" onSelect={() => setRenaming(true)}>Rename list</MenuItem>
               <MenuItem icon="📋" onSelect={() => void copy.run(listAsText(list.name, list.items, aisles, settings.unitSystem))}>
@@ -166,8 +166,8 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
                 </MenuCheckbox>
               )}
             </Menu>
-          </div>
-        </div>
+          }
+        />
         <ProgressBar done={list.items.filter((i) => i.checked).length} total={list.items.length} />
       </div>
       {copied && <p role="status" className="text-sm text-emerald-700">Copied to clipboard</p>}

@@ -5,6 +5,7 @@ import { Link } from 'react-router';
 import { deleteList } from '../../app/lists';
 import { ProgressBar } from '../components/ProgressBar';
 import { ConfirmDialog } from '../components/Dialog';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { useDb } from '../db';
 
 /** Saved lists, newest first. */
@@ -16,7 +17,7 @@ export function ListsScreen() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
-      <h1 className="text-[28px] font-bold tracking-tight text-slate-900">Lists</h1>
+      <ScreenHeader title="Lists" />
       {lists.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-slate-500">
           No lists yet. Select recipes and build one.

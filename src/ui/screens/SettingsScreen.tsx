@@ -2,6 +2,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useId, type ReactNode } from 'react';
 import { getAiKeyStatus } from '../../app/ai';
 import { getProvider } from '../../services/providers';
+import { AppLogo } from '../components/AppLogo';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { useDb } from '../db';
 import { useAisles, useSettings, useStorageUsage } from '../hooks';
 import { getThemePref } from '../theme';
@@ -33,7 +35,7 @@ export function SettingsScreen() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <h1 className="text-[28px] font-bold tracking-tight text-slate-900">Settings</h1>
+      <ScreenHeader title="Settings" />
 
       <Group title="Shopping">
         <SettingsRow to="/settings/appearance" emoji="🎨" tint="gray" title="Appearance" value={THEME_LABEL[getThemePref()]} />
@@ -52,7 +54,9 @@ export function SettingsScreen() {
         <SettingsRow to="/settings/storage" emoji="📦" tint="gray" title="Storage" value={usage ?? undefined} />
       </Group>
 
-      <p className="text-center text-xs text-slate-400">CartCraft version {__APP_VERSION__}</p>
+      <p className="flex items-center justify-center gap-2 text-xs text-slate-400">
+        <AppLogo className="h-5 w-5" /> CartCraft version {__APP_VERSION__}
+      </p>
     </div>
   );
 }

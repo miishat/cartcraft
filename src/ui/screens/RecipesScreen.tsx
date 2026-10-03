@@ -6,6 +6,7 @@ import { newId } from '../../app/ids';
 import { createList } from '../../app/lists';
 import { ErrorNote } from '../components/ErrorNote';
 import { RecipeCover } from '../components/RecipeCover';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { ServingsStepper } from '../components/ServingsStepper';
 import { useDb } from '../db';
 import { useSettings } from '../hooks';
@@ -58,15 +59,14 @@ export function RecipesScreen({ makeId = newId, now = Date.now }: Props) {
 
   return (
     <div className="mx-auto max-w-2xl space-y-4 pb-36">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-[28px] font-bold tracking-tight text-slate-900">Recipes</h1>
-          {recipes.length > 0 && <p className="text-sm text-slate-500">Pick recipes for your next list</p>}
-        </div>
-        <Link to="/recipes/new" className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-white px-3 py-2 text-sm font-medium text-slate-800 ring-1 ring-slate-200">
-          <Plus size={16} /> Add recipe
-        </Link>
-      </div>
+      <ScreenHeader
+        title="Recipes"
+        actions={
+          <Link to="/recipes/new" aria-label="Add recipe" className="inline-flex items-center gap-1 rounded-xl bg-emerald-700 px-3 py-2 text-sm font-semibold text-white">
+            <Plus size={16} aria-hidden="true" /> Add
+          </Link>
+        }
+      />
 
       {recipes.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-slate-500">

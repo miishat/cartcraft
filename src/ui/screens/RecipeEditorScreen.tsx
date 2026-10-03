@@ -11,6 +11,7 @@ import {
 } from '../../services/urlImport';
 import { ConfirmDialog } from '../components/Dialog';
 import { ErrorNote } from '../components/ErrorNote';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { ReviewTable } from '../components/ReviewTable';
 import { useDb } from '../db';
 import { useSettings } from '../hooks';
@@ -197,7 +198,10 @@ export function RecipeEditorScreen({
 
   return (
     <form onSubmit={onSave} className="mx-auto max-w-2xl space-y-6">
-      <h1 className="text-2xl font-semibold text-slate-900">{id ? 'Edit recipe' : 'Add recipe'}</h1>
+      <ScreenHeader
+        title={id ? 'Edit recipe' : 'Add recipe'}
+        back={id ? { to: `/recipes/${id}/view`, label: 'Recipe' } : { to: '/', label: 'Recipes' }}
+      />
 
       <section className="space-y-2">
         <label htmlFor="raw" className="block text-sm font-medium text-slate-700">Ingredients</label>

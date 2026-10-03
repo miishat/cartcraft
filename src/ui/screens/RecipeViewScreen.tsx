@@ -1,11 +1,12 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { ArrowLeft, ExternalLink, Pencil } from 'lucide-react';
+import { ExternalLink, Pencil } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { fetchMissingSteps } from '../../app/recipes';
 import { formatAmount, scaleLine, type IngredientLine, type UnitSystem } from '../../domain';
 import type { UrlImportResult } from '../../services/urlImport';
 import { RecipeCover } from '../components/RecipeCover';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { ServingsStepper } from '../components/ServingsStepper';
 import { useDb } from '../db';
 import { useSettings } from '../hooks';
@@ -52,23 +53,21 @@ export function RecipeViewScreen({ importRecipe }: Props = {}) {
 
   return (
     <div className="mx-auto max-w-2xl space-y-5">
-      <Link to="/" className="inline-flex items-center gap-1 text-sm font-medium text-slate-600">
-        <ArrowLeft size={16} /> Recipes
-      </Link>
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-4">
-          <RecipeCover recipe={recipe} size="lg" />
-          <h1 className="text-[28px] font-bold leading-tight tracking-tight text-slate-900">{recipe.title}</h1>
-        </div>
-        <Link
-          to={`/recipes/${recipe.id}`}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
-        >
-          <Pencil size={14} /> Edit
-        </Link>
-      </div>
+      <ScreenHeader
+        title={recipe.title}
+        back={{ to: '/', label: 'Recipes' }}
+        actions={
+          <Link
+            to={`/recipes/${recipe.id}`}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+          >
+            <Pencil size={14} /> Edit
+          </Link>
+        }
+      />
 
       <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
+        <RecipeCover recipe={recipe} size="lg" />
         Serves
         <ServingsStepper value={target} onChange={setServings} label={recipe.title} />
         {target !== recipe.baseServings && (
