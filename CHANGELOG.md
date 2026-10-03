@@ -8,6 +8,7 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 - Recipe pages show the method steps from the recipe site, grouped by section, with a View original link. Recipes imported earlier fetch their steps the first time you open them.
 
 ### Changed
+- On phones, the ⋯ menu and each item's options open as a sheet from the bottom of the screen instead of in place. Swipe it down or tap outside to close.
 - Aisles on shopping lists show a food emoji (🥕 🥩 🥛 🥐 ...) on their coloured badge instead of a line icon.
 - Rename list, Copy list as text and Keep screen on moved into a ⋯ menu at the top of a shopping list.
 - Settings is a short page of rows, each opening its own page: Appearance, Units, Default servings, Aisles, Pantry staples, AI helper, Backup and restore, and Storage. Each row shows what is set.

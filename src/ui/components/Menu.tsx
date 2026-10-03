@@ -2,10 +2,12 @@ import { MoreHorizontal } from 'lucide-react';
 import {
   createContext, useCallback, useContext, useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode,
 } from 'react';
+import { useIsPhone } from '../useIsPhone';
+import { Sheet } from './Sheet';
 
 const CloseMenu = createContext<() => void>(() => undefined);
 
-const ITEM = 'flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left text-sm text-slate-800 hover:bg-slate-50 focus:bg-slate-100 focus:outline-none';
+const ITEM = 'flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left md:py-2.5 text-sm text-slate-800 hover:bg-slate-50 focus:bg-slate-100 focus:outline-none';
 const ITEMS = '[role="menuitem"],[role="menuitemcheckbox"]';
 
 /** A ⋯ button that opens a small menu card. Escape or a click outside closes it. */
@@ -14,6 +16,7 @@ export function Menu({ label, children }: { label: string; children: ReactNode }
   const button = useRef<HTMLButtonElement>(null);
   const menu = useRef<HTMLDivElement>(null);
   const menuId = useId();
+  const phone = useIsPhone();
 
   const close = useCallback((returnFocus = true) => {
     setOpen(false);
@@ -48,6 +51,19 @@ export function Menu({ label, children }: { label: string; children: ReactNode }
     }
   };
 
+  const card = (
+    <div
+      ref={menu}
+      id={menuId}
+      role="menu"
+      aria-label={label}
+      onKeyDown={onKeyDown}
+      className={phone ? 'pb-1' : 'absolute right-0 top-full z-40 mt-2 w-64 overflow-hidden rounded-2xl bg-white py-1 shadow-lg ring-1 ring-slate-200'}
+    >
+      <CloseMenu.Provider value={close}>{children}</CloseMenu.Provider>
+    </div>
+  );
+
   return (
     <div className="relative">
       <button
@@ -62,18 +78,7 @@ export function Menu({ label, children }: { label: string; children: ReactNode }
       >
         <MoreHorizontal size={18} aria-hidden="true" />
       </button>
-      {open && (
-        <div
-          ref={menu}
-          id={menuId}
-          role="menu"
-          aria-label={label}
-          onKeyDown={onKeyDown}
-          className="absolute right-0 top-full z-40 mt-2 w-64 overflow-hidden rounded-2xl bg-white py-1 shadow-lg ring-1 ring-slate-200"
-        >
-          <CloseMenu.Provider value={close}>{children}</CloseMenu.Provider>
-        </div>
-      )}
+      {open && (phone ? <Sheet title={label} onClose={() => close()}>{card}</Sheet> : card)}
     </div>
   );
 }

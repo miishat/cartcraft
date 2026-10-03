@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { formatAmounts, type ListItem, type UnitSystem } from '../../domain';
 import { itemEditText, itemLabel } from '../../app/listView';
 import type { Aisle } from '../../data/types';
+import { useIsPhone } from '../useIsPhone';
+import { Sheet } from './Sheet';
 
 interface Props {
   item: ListItem;
@@ -17,6 +19,7 @@ interface Props {
 /** One shopping row. The whole row toggles; the menu button reveals edit, move and delete. */
 export function ListItemRow({ item, aisles, unitSystem, onToggle, onEdit, onDelete, onMove }: Props) {
   const [open, setOpen] = useState(false);
+  const phone = useIsPhone();
   const amount = formatAmounts(item.amounts, unitSystem);
   const editText = itemEditText(item, unitSystem);
   const [draft, setDraft] = useState(editText);
@@ -26,6 +29,43 @@ export function ListItemRow({ item, aisles, unitSystem, onToggle, onEdit, onDele
     if (!open) setDraft(editText);
     setOpen(!open);
   };
+
+  const field = phone ? 'py-2' : 'py-1';
+  const panelBody = (
+    <>
+      <form
+        className="flex gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!draft.trim()) return;
+          // Re-parsing unchanged text can be lossy (for example "2 cloves + 1 tbsp"), so skip it.
+          if (draft !== editText) onEdit(draft);
+          setOpen(false);
+        }}
+      >
+        <input className={`min-w-0 flex-1 rounded border border-slate-200 px-2 ${field}`} value={draft} onChange={(e) => setDraft(e.target.value)} aria-label={`Edit ${item.name}`} />
+        <button type="submit" className={`rounded bg-slate-900 px-3 text-white ${field}`}>Save</button>
+      </form>
+      <div className="flex items-center gap-2">
+        <label className="flex flex-1 items-center gap-2">
+          Aisle
+          <select className={`flex-1 rounded border border-slate-200 px-2 ${field}`} value={item.aisleId} onChange={(e) => onMove(e.target.value)} aria-label={`Aisle for ${item.name}`}>
+            {aisles.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+          </select>
+        </label>
+        <button
+          type="button"
+          onClick={() => {
+            onDelete();
+            setOpen(false);
+          }}
+          className={`font-medium text-red-700 ${phone ? 'px-2 py-2' : ''}`}
+        >
+          Delete
+        </button>
+      </div>
+    </>
+  );
 
   return (
     <li className="bg-white">
@@ -54,32 +94,13 @@ export function ListItemRow({ item, aisles, unitSystem, onToggle, onEdit, onDele
           <MoreHorizontal size={18} />
         </button>
       </div>
-      {open && (
-        <div className="space-y-2 border-t border-slate-100 px-3 py-2 text-sm">
-          <form
-            className="flex gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!draft.trim()) return;
-              // Re-parsing unchanged text can be lossy (for example "2 cloves + 1 tbsp"), so skip it.
-              if (draft !== editText) onEdit(draft);
-              setOpen(false);
-            }}
-          >
-            <input className="min-w-0 flex-1 rounded border border-slate-200 px-2 py-1" value={draft} onChange={(e) => setDraft(e.target.value)} aria-label={`Edit ${item.name}`} />
-            <button type="submit" className="rounded bg-slate-900 px-3 py-1 text-white">Save</button>
-          </form>
-          <div className="flex items-center gap-2">
-            <label className="flex flex-1 items-center gap-2">
-              Aisle
-              <select className="flex-1 rounded border border-slate-200 px-2 py-1" value={item.aisleId} onChange={(e) => onMove(e.target.value)} aria-label={`Aisle for ${item.name}`}>
-                {aisles.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-              </select>
-            </label>
-            <button type="button" onClick={onDelete} className="font-medium text-red-700">Delete</button>
-          </div>
-        </div>
-      )}
+      {open && (phone ? (
+        <Sheet title={item.name.charAt(0).toUpperCase() + item.name.slice(1)} onClose={() => setOpen(false)}>
+          <div className="space-y-3 px-5 pb-2 text-sm">{panelBody}</div>
+        </Sheet>
+      ) : (
+        <div className="space-y-2 border-t border-slate-100 px-3 py-2 text-sm">{panelBody}</div>
+      ))}
     </li>
   );
 }
