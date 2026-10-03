@@ -13,6 +13,9 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 - The Default servings number field now ignores values above 99.
 - Settings rows, Backup buttons and choice lists show a clear outline when reached with the keyboard.
 
+### Fixed
+- Add swaps & tips works with replies that have extra text, too many suggestions or a long thinking step, and AI errors now say what went wrong (a rejected model name, or a reply cut off).
+
 ## [0.3.0] - 2026-10-02
 
 ### Added

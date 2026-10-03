@@ -1,7 +1,8 @@
 import { UserFacingError } from '../../app/errors';
 import type { Provider } from '../providers';
 
-export type LlmErrorKind = 'auth' | 'billing' | 'rate_limited' | 'timeout' | 'network' | 'server' | 'bad_response';
+export type LlmErrorKind =
+  | 'auth' | 'billing' | 'rate_limited' | 'timeout' | 'network' | 'server' | 'rejected' | 'truncated' | 'bad_response';
 
 const MESSAGES: Record<LlmErrorKind, string> = {
   auth: 'The AI provider rejected the key. Check it in Settings.',
@@ -10,6 +11,8 @@ const MESSAGES: Record<LlmErrorKind, string> = {
   timeout: 'The AI took too long to answer. Try again.',
   network: 'Could not reach the AI provider. Check your connection.',
   server: 'The AI provider had a problem. Try again later.',
+  rejected: 'The AI provider rejected the request. Check the model name in Settings.',
+  truncated: 'The AI ran out of room before it finished. Try again.',
   bad_response: "The AI didn't return usable data. Try again, or continue without it.",
 };
 
@@ -39,7 +42,21 @@ function statusError(status: number): LlmErrorKind {
   if (status === 402) return 'billing';
   if (status === 429) return 'rate_limited';
   if (status >= 500) return 'server';
+  if (status === 400 || status === 404 || status === 422) return 'rejected';
   return 'bad_response';
+}
+
+/** Parses the reply, tolerating a code fence or a sentence before and after the object. */
+function extractJson(content: string): unknown {
+  const text = content.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+  try {
+    return JSON.parse(text);
+  } catch {
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start < 0 || end <= start) throw new SyntaxError('No JSON object');
+    return JSON.parse(text.slice(start, end + 1));
+  }
 }
 
 /**
@@ -89,13 +106,13 @@ export async function chatJson(
   } finally {
     clearTimeout(timer);
   }
-  const content = (payload as { choices?: { message?: { content?: unknown } }[] })?.choices?.[0]?.message?.content;
-  if (typeof content !== 'string' || !content.trim()) throw new LlmError('bad_response');
-
-  const text = content.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+  const choice = (payload as { choices?: { message?: { content?: unknown }; finish_reason?: unknown }[] })?.choices?.[0];
+  const content = choice?.message?.content;
+  const cutOff = choice?.finish_reason === 'length';
+  if (typeof content !== 'string' || !content.trim()) throw new LlmError(cutOff ? 'truncated' : 'bad_response');
   try {
-    return JSON.parse(text);
+    return extractJson(content);
   } catch {
-    throw new LlmError('bad_response');
+    throw new LlmError(cutOff ? 'truncated' : 'bad_response');
   }
 }
