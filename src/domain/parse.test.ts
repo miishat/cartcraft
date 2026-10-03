@@ -298,6 +298,11 @@ describe('bracket groups (RecipeTin Eats biryani)', () => {
     expect(parse('1 cup milk (about 240 ml)').notes).toBe('about 240 ml');
   });
 
+  it('keeps a lone bracketed amount as the amount or note when there is no main quantity', () => {
+    expect(parse('Parmesan (30g)')).toMatchObject({ item: 'Parmesan', notes: '30g' });
+    expect(parse('Salt (1 tsp)')).toMatchObject({ item: 'Salt', notes: '1 tsp' });
+  });
+
   it('never leaves a stray bracket in the item', () => {
     expect(parse('2 eggs )').item).toBe('eggs');
   });

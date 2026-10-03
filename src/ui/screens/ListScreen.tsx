@@ -275,10 +275,10 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
 
       <form
         onSubmit={onAdd}
-        className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-20 bg-linear-to-t from-slate-50 from-60% to-transparent px-4 pb-3 pt-6 md:bottom-0 md:pb-6"
+        className="pointer-events-none fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-20 bg-linear-to-t from-slate-50 from-60% to-transparent px-4 pb-3 pt-6 md:bottom-0 md:pb-6"
       >
-        <div className="mx-auto flex max-w-2xl items-center gap-2 rounded-2xl bg-white p-1.5 pr-3 shadow-lg ring-1 ring-slate-300 focus-within:ring-2 focus-within:ring-emerald-600">
-          <button type="submit" aria-label="Add item" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-700 text-white">
+        <div className="pointer-events-auto mx-auto flex max-w-2xl items-center gap-2 rounded-2xl bg-white p-1.5 pr-3 shadow-lg ring-1 ring-slate-300 focus-within:ring-2 focus-within:ring-emerald-600">
+          <button type="submit" aria-label="Add item" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-700 text-white focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2">
             <Plus size={20} aria-hidden="true" />
           </button>
           <input

@@ -228,7 +228,7 @@ export function parseIngredientLine(raw: string, id: string): IngredientLine {
   const { outside, groups } = splitBracketGroups(text);
   for (const group of groups) {
     const content = cleanGroup(group);
-    if (!content || isAlternateMeasure(content)) continue;
+    if (!content || (quantity && isAlternateMeasure(content))) continue;
     const alternative = /^or\s+(.+)$/i.exec(content);
     if (alternative?.[1] !== undefined) alternatives.push(alternative[1].trim());
     else notes.push(content);

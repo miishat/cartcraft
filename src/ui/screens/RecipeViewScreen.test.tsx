@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { draftLinesFromText, saveRecipe } from '../../app/recipes';
 import type { UrlImportResult } from '../../services/urlImport';
@@ -90,6 +90,15 @@ describe('RecipeViewScreen', () => {
     expect(await screen.findByText('Knead it')).toBeInTheDocument();
     expect(fake).toHaveBeenCalledTimes(1);
     expect(fake).toHaveBeenCalledWith('https://example.com/bread');
+  });
+
+  it('clears the fetching status once a failed fetch settles', async () => {
+    const { db, id } = await seeded('https://example.com/bread');
+    const fake = vi.fn(async (): Promise<UrlImportResult> => ({ ok: false, error: 'fetch_failed' }));
+    renderRoutes([{ path: '/recipes/:id/view', element: <RecipeViewScreen importRecipe={fake} /> }], `/recipes/${id}/view`, db);
+    await screen.findByText('2 cups flour');
+    await waitFor(() => expect(fake).toHaveBeenCalled());
+    await waitFor(() => expect(screen.queryByText(/Getting the method/)).toBeNull());
   });
 
   it('shows no Method region for a recipe without a source', async () => {

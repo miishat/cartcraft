@@ -33,9 +33,14 @@ export function RecipeViewScreen({ importRecipe }: Props = {}) {
   const settings = useSettings();
   const recipe = useLiveQuery(async () => (await db.recipes.get(id)) ?? null, [db, id]);
   const [servings, setServings] = useState<number | null>(null);
+  const [fetching, setFetching] = useState(false);
   const needsSteps = recipe?.steps === undefined && /^https?:\/\//i.test(recipe?.sourceUrl ?? '');
   useEffect(() => {
-    if (needsSteps) void fetchMissingSteps(db, id, importRecipe).catch(() => undefined);
+    if (!needsSteps) return;
+    setFetching(true);
+    void fetchMissingSteps(db, id, importRecipe)
+      .catch(() => undefined)
+      .finally(() => setFetching(false));
   }, [db, id, needsSteps, importRecipe]);
 
   if (recipe === undefined) return null;
@@ -102,7 +107,7 @@ export function RecipeViewScreen({ importRecipe }: Props = {}) {
           </ol>
         </section>
       )}
-      {needsSteps && <p role="status" className="text-sm text-slate-500">Getting the method from the recipe page...</p>}
+      {needsSteps && fetching && <p role="status" className="text-sm text-slate-500">Getting the method from the recipe page...</p>}
 
       {recipe.sourceUrl && /^https?:\/\//i.test(recipe.sourceUrl) && (
         <a href={recipe.sourceUrl} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1 text-sm font-medium text-emerald-800 hover:underline">

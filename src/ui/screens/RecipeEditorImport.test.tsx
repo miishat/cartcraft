@@ -54,6 +54,31 @@ describe('RecipeEditorScreen: import from link', () => {
     expect(recipe?.steps).toEqual(steps);
   });
 
+  it('drops steps from a previous link when a later import fails', async () => {
+    const steps = [{ text: 'Brown the beef.', isHeader: false }];
+    const results: UrlImportResult[] = [
+      { ok: true, recipe: { title: 'Tacos', ingredients: ['1 lb ground beef'], servings: 4, steps, sourceUrl: URL } },
+      { ok: false, error: 'blocked' },
+    ];
+    const importRecipe = vi.fn(async () => results.shift() as UrlImportResult);
+    const { user, db } = renderRoutes(
+      [{ path: '/recipes/new', element: <RecipeEditorScreen makeId={sequentialIds('id')} now={() => 1000} importRecipe={importRecipe} /> }],
+      '/recipes/new',
+    );
+    await user.type(screen.getByLabelText('Ingredients'), URL);
+    await user.click(screen.getByRole('button', { name: 'Import from link' }));
+    await screen.findByText('Review (1 lines)');
+    await user.clear(screen.getByLabelText('Ingredients'));
+    await user.type(screen.getByLabelText('Ingredients'), 'https://www.example.com/other');
+    await user.click(screen.getByRole('button', { name: 'Import from link' }));
+    await screen.findByRole('alert');
+    await user.click(await screen.findByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(screen.getByTestId('location').textContent).toBe('/'));
+    const [recipe] = await db.recipes.toArray();
+    expect(recipe?.sourceUrl).toBe('https://www.example.com/other');
+    expect(recipe?.steps).toBeUndefined();
+  });
+
   it('asks the user to check servings when the page has none', async () => {
     const { user } = setup({
       ok: true,

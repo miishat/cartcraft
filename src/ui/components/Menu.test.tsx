@@ -123,4 +123,13 @@ describe('Menu', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(screen.getByRole('menu', { name: 'List options' })).toBeInTheDocument();
   });
+
+  it('stays open when a phone sheet is pressed outside the menu card', async () => {
+    mockViewport(true);
+    const user = userEvent.setup();
+    render(<Harness />);
+    await user.click(screen.getByRole('button', { name: 'List options' }));
+    await user.pointer({ keys: '[MouseLeft]', target: screen.getByRole('heading', { name: 'List options' }) });
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+  });
 });

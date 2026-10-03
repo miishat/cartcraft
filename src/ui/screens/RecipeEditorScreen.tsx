@@ -120,6 +120,7 @@ export function RecipeEditorScreen({
     }
     const draft = await runCleanUp(page.text);
     setSourceUrl(page.sourceUrl);
+    setSteps(undefined);
     setAiUrl(null);
     applyAiDraft(draft, draft.lines.map((l) => l.raw).join('\n'));
   }, 'AI could not read that page. Copy the ingredient list and paste it here.');
@@ -136,6 +137,7 @@ export function RecipeEditorScreen({
       if (result.error === 'no_recipe_data') setAiUrl(url.trim());
       if (pasteInstead) {
         setSourceUrl(url.trim());
+        setSteps(undefined);
         setRawText('');
       }
       return;

@@ -28,6 +28,7 @@ export function Menu({ label, children }: { label: string; children: ReactNode }
     menu.current?.querySelector<HTMLElement>(ITEMS)?.focus();
     const onPointerDown = (e: PointerEvent | MouseEvent) => {
       const target = e.target as Node;
+      if ((target as Element).closest?.('[role="dialog"]')) return;
       if (!menu.current?.contains(target) && !button.current?.contains(target)) close(false);
     };
     document.addEventListener('pointerdown', onPointerDown);
