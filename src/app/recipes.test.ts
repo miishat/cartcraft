@@ -2,8 +2,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { getSettings } from '../data/db';
 import { createTestDb, sequentialIds } from '../test/db';
 import {
-  RecipeValidationError, deleteRecipe, draftLinesFromText, reparseLine, requestPersistence, saveRecipe,
+  RecipeValidationError, deleteRecipe, draftLinesFromText, fetchMissingSteps, reparseLine, requestPersistence, saveRecipe,
 } from './recipes';
+import type { UrlImportResult } from '../services/urlImport';
 
 describe('draftLinesFromText', () => {
   it('parses each non-blank line with a fresh id', () => {
@@ -89,5 +90,55 @@ describe('requestPersistence', () => {
     const db = createTestDb();
     expect(await requestPersistence(db, undefined)).toBeUndefined();
     expect((await getSettings(db)).persistGranted).toBeUndefined();
+  });
+});
+
+describe('fetchMissingSteps', () => {
+  const sourceUrl = 'https://example.com/r';
+  async function seed(extra: { sourceUrl?: string; steps?: { text: string; isHeader: boolean }[] }) {
+    const db = createTestDb();
+    const ids = sequentialIds('r');
+    const id = await saveRecipe(
+      db,
+      { title: 'Eggs', rawText: '2 eggs', baseServings: 2, ingredients: draftLinesFromText('2 eggs', ids), ...extra },
+      1,
+      ids,
+    );
+    return { db, id };
+  }
+
+  it('stores steps for a recipe that has none, leaving ingredients alone', async () => {
+    const { db, id } = await seed({ sourceUrl });
+    const before = (await db.recipes.get(id))!.ingredients;
+    const fake = vi.fn(async (): Promise<UrlImportResult> => ({
+      ok: true,
+      recipe: { title: 'X', ingredients: ['9 eggs'], steps: [{ text: 'Boil', isHeader: false }], sourceUrl } as never,
+    }));
+    await fetchMissingSteps(db, id, fake);
+    const after = await db.recipes.get(id);
+    expect(fake).toHaveBeenCalledWith(sourceUrl);
+    expect(after?.steps).toEqual([{ text: 'Boil', isHeader: false }]);
+    expect(after?.ingredients).toEqual(before);
+  });
+
+  it('stores an empty list when the page has no recipe data', async () => {
+    const { db, id } = await seed({ sourceUrl });
+    await fetchMissingSteps(db, id, async () => ({ ok: false, error: 'no_recipe_data' }));
+    expect((await db.recipes.get(id))?.steps).toEqual([]);
+  });
+
+  it('leaves steps missing after a network failure so it retries later', async () => {
+    const { db, id } = await seed({ sourceUrl });
+    await fetchMissingSteps(db, id, async () => ({ ok: false, error: 'fetch_failed' }));
+    expect((await db.recipes.get(id))?.steps).toBeUndefined();
+  });
+
+  it('does nothing when steps exist or there is no source', async () => {
+    const fake = vi.fn();
+    const withSteps = await seed({ sourceUrl, steps: [{ text: 'Boil', isHeader: false }] });
+    await fetchMissingSteps(withSteps.db, withSteps.id, fake);
+    const noSource = await seed({});
+    await fetchMissingSteps(noSource.db, noSource.id, fake);
+    expect(fake).not.toHaveBeenCalled();
   });
 });

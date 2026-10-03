@@ -1,6 +1,7 @@
 import { parseIngredientLine, type IngredientLine, type RecipeStep } from '../domain';
 import { updateSettings, type CartCraftDb } from '../data/db';
 import type { Recipe } from '../data/types';
+import { importRecipeFromUrl, type UrlImportError, type UrlImportResult } from '../services/urlImport';
 import { UserFacingError } from './errors';
 
 export interface RecipeInput {
@@ -79,4 +80,23 @@ export async function requestPersistence(
   } catch {
     return undefined;
   }
+}
+
+const FINAL_IMPORT_ERRORS = new Set<UrlImportError>(['no_recipe_data', 'invalid_url', 'blocked', 'too_large']);
+
+/**
+ * Fetches the method for a recipe saved before steps were imported. Ingredients are never
+ * touched. A page that will never have steps is remembered as an empty list; a network
+ * failure leaves the recipe as it was so the next visit tries again.
+ */
+export async function fetchMissingSteps(
+  db: CartCraftDb,
+  recipeId: string,
+  importRecipe: (url: string) => Promise<UrlImportResult> = importRecipeFromUrl,
+): Promise<void> {
+  const recipe = await db.recipes.get(recipeId);
+  if (!recipe?.sourceUrl || recipe.steps !== undefined || !/^https?:\/\//i.test(recipe.sourceUrl)) return;
+  const result = await importRecipe(recipe.sourceUrl);
+  if (result.ok) await db.recipes.update(recipeId, { steps: result.recipe.steps ?? [] });
+  else if (FINAL_IMPORT_ERRORS.has(result.error)) await db.recipes.update(recipeId, { steps: [] });
 }
