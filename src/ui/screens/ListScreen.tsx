@@ -318,9 +318,9 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
       )}
 
       {undo && (
-        <div role="status" className="fixed inset-x-0 bottom-[calc(9.25rem+env(safe-area-inset-bottom))] mx-auto flex w-fit items-center gap-4 rounded-full bg-slate-900 px-4 py-2 text-sm text-white shadow-lg md:bottom-28">
+        <div role="status" className="fixed inset-x-0 bottom-[calc(9.25rem+env(safe-area-inset-bottom))] mx-auto flex w-fit items-center gap-4 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-800 shadow-lg md:bottom-28">
           Checked {undo.name}
-          <button type="button" onClick={() => void undoCheck()} className="font-semibold text-emerald-300">Undo</button>
+          <button type="button" onClick={() => void undoCheck()} className="font-semibold text-emerald-700">Undo</button>
         </div>
       )}
     </div>
