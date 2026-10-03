@@ -91,7 +91,8 @@ function pickMass(minG: number, system: UnitSystem): Rendered {
   }
   const oz = getUnit('oz')?.toBase ?? 1;
   const lb = getUnit('lb')?.toBase ?? 1;
-  if (minG / oz < 16 - EPSILON) return { unit: 'oz', render: (v) => formatFraction(v / oz, QUARTER_STEPS), shown: (v) => snappedValue(v / oz, QUARTER_STEPS) };
+  // From half a pound up, amounts read the way meat and produce are sold.
+  if (minG / oz < 8 - EPSILON) return { unit: 'oz', render: (v) => formatFraction(v / oz, QUARTER_STEPS), shown: (v) => snappedValue(v / oz, QUARTER_STEPS) };
   return { unit: 'lb', render: (v) => formatFraction(v / lb, QUARTER_STEPS), shown: (v) => snappedValue(v / lb, QUARTER_STEPS) };
 }
 

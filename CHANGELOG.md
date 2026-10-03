@@ -12,6 +12,7 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 - The AI provider is picked from a list instead of a dropdown, and "Add an AI key in Settings" links straight to the AI helper page.
 - The Default servings number field now ignores values above 99.
 - Settings rows, Backup buttons and choice lists show a clear outline when reached with the keyboard.
+- In US units, weights of half a pound or more show in pounds (rounded to a quarter pound) instead of ounces, for example "3/4 lb" instead of "13 1/4 oz".
 
 ### Fixed
 - Add swaps & tips works with replies that have extra text, too many suggestions or a long thinking step, and AI errors now say what went wrong (a rejected model name, or a reply cut off).
