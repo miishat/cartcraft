@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { createList, setItemChecked } from '../../app/lists';
+import { createList, defaultListName, setItemChecked } from '../../app/lists';
 import { draftLinesFromText, saveRecipe } from '../../app/recipes';
 import type { CartCraftDb } from '../../data/db';
 import { createTestDb, sequentialIds } from '../../test/db';
@@ -14,13 +14,16 @@ async function seededList(): Promise<{ db: CartCraftDb; listId: string }> {
   const ids = sequentialIds('s');
   const text = '2 onions\n1 cup milk\nSalt, to taste';
   const recipeId = await saveRecipe(db, { title: 'Soup', rawText: text, baseServings: 4, ingredients: draftLinesFromText(text, ids) }, 1, ids);
-  const listId = await createList(db, [{ recipeId, targetServings: 4 }], Date.UTC(2026, 9, 1, 12), ids);
+  const listId = await createList(db, [{ recipeId, targetServings: 4 }], SEED_NOW, ids);
   return { db, listId };
 }
 
 async function openListMenu(user: { click: (el: Element) => Promise<void> }) {
   await user.click(await screen.findByRole('button', { name: 'List options' }));
 }
+
+const SEED_NOW = Date.UTC(2026, 9, 1, 12);
+const SEED_NAME = defaultListName(SEED_NOW);
 
 const routes = [
   { path: '/lists', element: <ListsScreen /> },
@@ -31,10 +34,10 @@ describe('ListsScreen', () => {
   it('shows saved lists with progress and deletes after confirm', async () => {
     const { db } = await seededList();
     const { user } = renderRoutes(routes, '/lists', db);
-    expect(await screen.findByText('Shopping list, Oct 1')).toBeInTheDocument();
+    expect(await screen.findByText(SEED_NAME)).toBeInTheDocument();
     expect(screen.getByText('0 of 3 in cart')).toBeInTheDocument();
     expect(screen.getByRole('progressbar', { name: 'Shopping progress' })).toHaveAttribute('aria-valuenow', '0');
-    await user.click(screen.getByRole('button', { name: 'Delete Shopping list, Oct 1' }));
+    await user.click(screen.getByRole('button', { name: `Delete ${SEED_NAME}` }));
     await user.click(await screen.findByRole('button', { name: 'Delete list' }));
     expect(await screen.findByText(/No lists yet/)).toBeInTheDocument();
   });
@@ -118,7 +121,7 @@ describe('ListScreen', () => {
     await user.click(screen.getByRole('menuitem', { name: 'Rename list' }));
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Shopping list, Oct 1' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: SEED_NAME })).toBeInTheDocument();
   });
 
   it('shows a not-found message for a missing list', async () => {

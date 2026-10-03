@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { mockViewport } from '../../test/matchMedia';
 import { Sheet } from './Sheet';
 
 // jsdom has no PointerEvent, so clientY would be dropped; a MouseEvent subclass carries it.
@@ -58,5 +59,18 @@ describe('Sheet', () => {
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(first).not.toHaveBeenCalled();
     expect(second).toHaveBeenCalledOnce();
+  });
+
+  it('focuses the first field on wide screens', () => {
+    mockViewport(false);
+    render(<Sheet title="T" onClose={() => undefined}><input aria-label="Name" /><button type="button">Chip</button></Sheet>);
+    expect(screen.getByLabelText('Name')).toHaveFocus();
+  });
+
+  it('skips text fields for the initial focus on phones', () => {
+    mockViewport(true);
+    render(<Sheet title="T" onClose={() => undefined}><input aria-label="Name" /><button type="button">Chip</button></Sheet>);
+    expect(screen.getByRole('button', { name: 'Chip' })).toHaveFocus();
+    expect(screen.getByLabelText('Name')).not.toHaveFocus();
   });
 });

@@ -3,8 +3,9 @@ import { Check, Plus, ShoppingBasket } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { newId } from '../../app/ids';
-import { createList } from '../../app/lists';
-import { ErrorNote } from '../components/ErrorNote';
+import { listNameSuggestions } from '../../app/listNames';
+import { createList, defaultListName } from '../../app/lists';
+import { NameListSheet } from '../components/NameListSheet';
 import { RecipeCover } from '../components/RecipeCover';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { ServingsStepper } from '../components/ServingsStepper';
@@ -25,12 +26,14 @@ export function RecipesScreen({ makeId = newId, now = Date.now }: Props) {
   const recipes = useLiveQuery(() => db.recipes.orderBy('title').toArray(), [db]);
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<Map<string, number>>(new Map());
-  const build = useAsyncAction(async () => {
+  const [naming, setNaming] = useState(false);
+  const build = useAsyncAction(async (name: string) => {
     const listId = await createList(
       db,
       [...selected].map(([recipeId, targetServings]) => ({ recipeId, targetServings })),
       now(),
       makeId,
+      name,
     );
     navigate(`/lists/${listId}`);
   }, 'Could not build the list. Try again.');
@@ -121,11 +124,9 @@ export function RecipesScreen({ makeId = newId, now = Date.now }: Props) {
 
       {selected.size > 0 && (
         <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-20 flex flex-col items-center gap-2 px-4 pb-3 md:bottom-0 md:pb-6">
-          <ErrorNote message={build.error} className="rounded-lg bg-red-50 px-3 py-2 shadow" />
           <button
             type="button"
-            onClick={() => void build.run()}
-            disabled={build.pending}
+            onClick={() => setNaming(true)}
             aria-label={`Build list (${selected.size})`}
             className="mx-auto flex w-full max-w-2xl items-center gap-3 rounded-2xl bg-slate-900 px-4 py-3.5 font-semibold text-white shadow-lg disabled:opacity-50"
           >
@@ -135,6 +136,17 @@ export function RecipesScreen({ makeId = newId, now = Date.now }: Props) {
             </span>
           </button>
         </div>
+      )}
+
+      {naming && (
+        <NameListSheet
+          initialName={defaultListName(now())}
+          suggestions={listNameSuggestions(recipes.filter((r) => selected.has(r.id)).map((r) => r.title), now())}
+          pending={build.pending}
+          error={build.error}
+          onCancel={() => setNaming(false)}
+          onCreate={(name) => void build.run(name)}
+        />
       )}
     </div>
   );

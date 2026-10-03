@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { useIsPhone } from '../useIsPhone';
 
 const CLOSE_DRAG_PX = 80;
 const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"]), [role="menuitem"], [role="menuitemcheckbox"]';
@@ -13,11 +14,16 @@ export function Sheet({ title, onClose, children }: { title: string; onClose: ()
   const panel = useRef<HTMLDivElement>(null);
   const dragFrom = useRef<number | null>(null);
 
+  const phone = useIsPhone();
+  const phoneAtMount = useRef(phone);
+
   const latestClose = useRef(onClose);
   latestClose.current = onClose;
 
   useEffect(() => {
-    panel.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
+    // On phones, skip text fields so the keyboard does not pop up over the sheet.
+    const fields = panel.current?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? [];
+    [...fields].find((el) => !(phoneAtMount.current && /^(INPUT|TEXTAREA)$/.test(el.tagName)))?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') latestClose.current();
     };

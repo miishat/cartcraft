@@ -5,6 +5,7 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 ## [Unreleased]
 
 ### Added
+- Building a list asks for its name, filled in as "Groceries, Fri Oct 2", with suggestions from the recipes you picked (such as "Biryani + Tacos") and the day ("Weekend shop").
 - Recipe pages show the method steps from the recipe site, grouped by section, with a View original link. Recipes imported earlier fetch their steps the first time you open them.
 
 ### Changed
