@@ -14,6 +14,7 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 - New logo: a shopping cart whose basket is a recipe card, green on a white tile. It replaces the chef hat in the app, the browser tab and the installed app icon.
 
 ### Fixed
+- The "Checked ... Undo" and app-update pop-ups now use the app theme (card colours, green action) instead of a fixed dark bar.
 - On phones, tapping into a text field (such as the recipe link box) no longer zooms the page in.
 - In metric, spoon and cup amounts of solids (butter, herbs, flour, sugar, cheese, spices, chopped vegetables and more) now show in grams instead of ml. Liquids like milk and broth stay in ml.
 - Installed apps (such as on the Windows taskbar) now pick up the new logo instead of keeping the old cached icon. You may need to unpin and re-pin the app once.
@@ -44,6 +45,7 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 - The add item bar on a shopping list stands out from the list: a stronger outline, a filled + button on the left, and the list fades out behind it.
 
 ### Fixed
+- The "Checked ... Undo" and app-update pop-ups now use the app theme (card colours, green action) instead of a fixed dark bar.
 - Recipes saved before this version are re-read once with the fixed ingredient reader, so lines like "Chicken thighs )" are repaired. Shopping lists already built are not changed.
 - Add swaps & tips works with replies that have extra text, too many suggestions or a long thinking step, and AI errors now say what went wrong (a rejected model name, or a reply cut off).
 - Imported ingredient lines with brackets inside brackets (common on RecipeTin Eats) no longer show stray ")" or "(" in the name or notes, "Note 1" references are dropped, and a repeated amount in other units such as "(1.5 lb)" is no longer shown as a note.
@@ -89,6 +91,7 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 - The app and recipe import are served by one Cloudflare Worker, and recipe import uses Cloudflare's rate limiter (10 imports per minute per address).
 
 ### Fixed
+- The "Checked ... Undo" and app-update pop-ups now use the app theme (card colours, green action) instead of a fixed dark bar.
 - Backups with duplicate entries are rejected with a clear message instead of failing during import, and a backup without the Other aisle no longer hides list items.
 - Ingredient parsing: "4 oz. can tomato paste" is read as one 4 oz can, "or to taste" and leading "x2" are understood, and bare units ("2 cups"), alternatives with their own amount and zero amounts are flagged for review. Zero amounts no longer display as "pinch".
 - Saving, deleting and building lists now show an inline message when something goes wrong instead of failing silently.
@@ -114,4 +117,5 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 - Gemini and AI Studio code, the Tailwind CDN and the import map.
 
 ### Fixed
+- The "Checked ... Undo" and app-update pop-ups now use the app theme (card colours, green action) instead of a fixed dark bar.
 - Not-found states for missing lists and recipes; clear error when building a list fails.
