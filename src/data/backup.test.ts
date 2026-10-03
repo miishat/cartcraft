@@ -34,6 +34,16 @@ describe('exportBackup', () => {
   });
 });
 
+describe('recipe steps', () => {
+  it('survive an export and parse round trip', async () => {
+    const db = await seeded();
+    const [recipe] = await db.recipes.toArray();
+    await db.recipes.put({ ...recipe!, steps: [{ text: 'Boil rice', isHeader: false }] });
+    const result = parseBackup(serializeBackup(await exportBackup(db, 1)));
+    expect(result.ok && result.backup.data.recipes[0]?.steps).toEqual([{ text: 'Boil rice', isHeader: false }]);
+  });
+});
+
 describe('stripSecrets', () => {
   it('drops credential-like keys at any depth and keeps itemKey', () => {
     expect(stripSecrets({ itemKey: 'onion', apiKey: 'x', nested: [{ llmApiKey: 'y', token: 'z', name: 'ok' }] }))

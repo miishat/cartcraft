@@ -54,6 +54,7 @@ const RecipeSchema: z.ZodType<Recipe> = z.object({
   baseServings: z.number().finite().positive(),
   yieldText: text(500).optional(),
   ingredients: z.array(IngredientLineSchema).max(500),
+  steps: z.array(z.object({ text: text(), isHeader: z.boolean() })).max(300).optional(),
   createdAt: count,
   updatedAt: count,
 });

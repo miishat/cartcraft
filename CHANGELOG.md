@@ -15,6 +15,7 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 - In US units, weights of half a pound or more show in pounds (rounded to a quarter pound) instead of ounces, for example "3/4 lb" instead of "13 1/4 oz".
 
 ### Fixed
+- Recipes saved before this version are re-read once with the fixed ingredient reader, so lines like "Chicken thighs )" are repaired. Shopping lists already built are not changed.
 - Add swaps & tips works with replies that have extra text, too many suggestions or a long thinking step, and AI errors now say what went wrong (a rejected model name, or a reply cut off).
 - Imported ingredient lines with brackets inside brackets (common on RecipeTin Eats) no longer show stray ")" or "(" in the name or notes, "Note 1" references are dropped, and a repeated amount in other units such as "(1.5 lb)" is no longer shown as a note.
 
