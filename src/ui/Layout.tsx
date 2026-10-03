@@ -43,14 +43,15 @@ export function Layout() {
             key={to}
             to={to}
             end={end}
-            className={({ isActive }) => `flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-xs ${isActive ? 'font-medium text-emerald-800' : 'text-slate-500'}`}
+            aria-label={label}
+            className="flex min-h-14 flex-1 flex-col items-center justify-center gap-1"
           >
             {({ isActive }) => (
               <>
-                <span aria-hidden="true" className={`flex rounded-full px-4 py-0.5 text-xl leading-none ${isActive ? 'bg-emerald-100' : ''}`}>
+                <span aria-hidden="true" className={`text-3xl leading-none ${isActive ? '' : 'opacity-50 grayscale'}`}>
                   {emoji}
                 </span>
-                {label}
+                <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-emerald-700' : 'bg-transparent'}`} />
               </>
             )}
           </NavLink>
