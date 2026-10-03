@@ -22,6 +22,8 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 - The Default servings number field now ignores values above 99.
 - Settings rows, Backup buttons and choice lists show a clear outline when reached with the keyboard.
 - In US units, weights of half a pound or more show in pounds (rounded to a quarter pound) instead of ounces, for example "3/4 lb" instead of "13 1/4 oz".
+- Scrollbars are hidden everywhere in the app; scrolling works as before.
+- The add item bar on a shopping list stands out from the list: a stronger outline, a filled + button on the left, and the list fades out behind it.
 
 ### Fixed
 - Recipes saved before this version are re-read once with the fixed ingredient reader, so lines like "Chicken thighs )" are repaired. Shopping lists already built are not changed.
