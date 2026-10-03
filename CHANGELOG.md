@@ -4,6 +4,8 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-03
+
 ### Added
 - Six colour palettes in Settings > Appearance: Basil, Tomato, Blueberry, Saffron, Plum and Paper. Each works in light and dark.
 - Building a list asks for its name, filled in as "Groceries, Fri Oct 2", with suggestions from the recipes you picked (such as "Biryani + Tacos") and the day ("Weekend shop").
@@ -23,6 +25,7 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 - The Default servings number field now ignores values above 99.
 - Settings rows, Backup buttons and choice lists show a clear outline when reached with the keyboard.
 - In US units, weights of half a pound or more show in pounds (rounded to a quarter pound) instead of ounces, for example "3/4 lb" instead of "13 1/4 oz".
+- A recipe whose source is not a web address no longer shows that source text on its page.
 - Scrollbars are hidden everywhere in the app; scrolling works as before.
 - The add item bar on a shopping list stands out from the list: a stronger outline, a filled + button on the left, and the list fades out behind it.
 
