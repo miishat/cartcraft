@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest';
-import { applyTheme, getThemePref, setThemePref } from './theme';
+import { applyTheme, getPalette, getThemePref, setPalette, setThemePref } from './theme';
 
 afterEach(() => {
   localStorage.clear();
   delete document.documentElement.dataset.theme;
+  delete document.documentElement.dataset.palette;
+  document.querySelector('meta[name="theme-color"]')?.remove();
 });
 
 describe('theme', () => {
@@ -30,5 +32,21 @@ describe('theme', () => {
   it('resolves "system" to light when the device gives no preference', () => {
     applyTheme('system');
     expect(document.documentElement.dataset.theme).toBe('light');
+  });
+
+  it('applies the saved palette with the mode, and picks the matching browser colour', () => {
+    const meta = document.createElement('meta');
+    meta.name = 'theme-color';
+    document.head.append(meta);
+    setPalette('tomato');
+    setThemePref('dark');
+    expect(document.documentElement.dataset.palette).toBe('tomato');
+    expect(document.documentElement.dataset.theme).toBe('dark');
+    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#140b0a');
+  });
+
+  it('defaults to basil and forgets an unknown palette', () => {
+    localStorage.setItem('cartcraft-palette', 'neon');
+    expect(getPalette()).toBe('basil');
   });
 });

@@ -5,10 +5,12 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 ## [Unreleased]
 
 ### Added
+- Six colour palettes in Settings > Appearance: Basil, Tomato, Blueberry, Saffron, Plum and Paper. Each works in light and dark.
 - Building a list asks for its name, filled in as "Groceries, Fri Oct 2", with suggestions from the recipes you picked (such as "Biryani + Tacos") and the day ("Weekend shop").
 - Recipe pages show the method steps from the recipe site, grouped by section, with a View original link. Recipes imported earlier fetch their steps the first time you open them.
 
 ### Changed
+- The Appearance mode choice "Match my device" is now called "System".
 - On phones the logo bar at the top is gone. Each screen has its own header with its title, a way back and its actions, such as + Add on Recipes and ⋯ on a list.
 - Recipes no longer shows "Pick recipes for your next list", and its Add recipe button is now "+ Add".
 - On phones, the ⋯ menu and each item's options open as a sheet from the bottom of the screen instead of in place. Swipe it down or tap outside to close.

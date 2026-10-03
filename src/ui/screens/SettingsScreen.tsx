@@ -6,7 +6,7 @@ import { AppLogo } from '../components/AppLogo';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { useDb } from '../db';
 import { useAisles, useSettings, useStorageUsage } from '../hooks';
-import { getThemePref } from '../theme';
+import { getPalette, getThemePref, PALETTES } from '../theme';
 import { THEME_LABEL } from './settings/AppearancePage';
 import { CARD_LIST, GROUP_LABEL } from './settings/SettingsPage';
 import { SettingsRow } from './settings/SettingsRow';
@@ -38,7 +38,7 @@ export function SettingsScreen() {
       <ScreenHeader title="Settings" />
 
       <Group title="Shopping">
-        <SettingsRow to="/settings/appearance" emoji="🎨" tint="gray" title="Appearance" value={THEME_LABEL[getThemePref()]} />
+        <SettingsRow to="/settings/appearance" emoji="🎨" tint="gray" title="Appearance" value={`${PALETTES.find((p) => p.id === getPalette())?.label}, ${THEME_LABEL[getThemePref()]}`} />
         <SettingsRow to="/settings/units" emoji="⚖️" tint="blue" title="Units" value={UNIT_LABEL[settings.unitSystem]} />
         <SettingsRow to="/settings/servings" emoji="🍽️" tint="amber" title="Default servings" value={String(settings.defaultServings)} />
         <SettingsRow to="/settings/aisles" emoji="🛒" tint="green" title="Aisles" summary={aisles ? aisleSummary(aisles.length) : undefined} />
