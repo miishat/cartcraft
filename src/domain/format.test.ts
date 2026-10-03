@@ -81,3 +81,25 @@ describe('zero amounts', () => {
     expect(formatAmounts([{ quantity: { min: 0 }, unit: 'cup' }, { quantity: { min: 2 }, unit: 'clove' }], 'us')).toBe('2 cloves');
   });
 });
+
+describe('solids in metric', () => {
+  const cup = (n: number) => ({ quantity: { min: n }, unit: 'cup' as const });
+  it.each([
+    ['unsalted butter', '2 tbsp', '28 g'],
+    ['fresh parsley', '1/4 cup', '15 g'],
+    ['peanut butter', '2 tbsp', '32 g'],
+    ['garlic powder', '1 tsp', '3 g'],
+  ])('%s shows in grams', (item, _label, expected) => {
+    const amount = item === 'unsalted butter' ? { quantity: { min: 2 }, unit: 'tbsp' as const }
+      : item === 'fresh parsley' ? { quantity: { min: 0.25 }, unit: 'cup' as const }
+      : item === 'peanut butter' ? { quantity: { min: 2 }, unit: 'tbsp' as const }
+      : { quantity: { min: 1 }, unit: 'tsp' as const };
+    expect(formatAmount(amount, 'metric', item)).toBe(expected);
+  });
+  it('keeps liquids and unknown items in ml, and imperial untouched', () => {
+    expect(formatAmount(cup(1), 'metric', 'almond milk')).toBe('237 ml');
+    expect(formatAmount(cup(1), 'metric', 'coconut milk')).toBe('237 ml');
+    expect(formatAmount(cup(1), 'metric', 'butter')).toBe('227 g');
+    expect(formatAmount(cup(1), 'us', 'butter')).toBe('1 cup');
+  });
+});

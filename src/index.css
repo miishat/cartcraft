@@ -301,6 +301,15 @@ body {
   color: var(--color-slate-800);
 }
 
+/* iOS Safari zooms the page when a focused field is under 16px; keep fields at 16px on touch screens. */
+@media (pointer: coarse) {
+  input:not([type='checkbox'], [type='radio']),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
 @layer base {
   input:not([type='checkbox'], [type='radio']),
   textarea,

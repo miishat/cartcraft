@@ -14,6 +14,8 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 - New logo: a shopping cart whose basket is a recipe card, green on a white tile. It replaces the chef hat in the app, the browser tab and the installed app icon.
 
 ### Fixed
+- On phones, tapping into a text field (such as the recipe link box) no longer zooms the page in.
+- In metric, spoon and cup amounts of solids (butter, herbs, flour, sugar, cheese, spices, chopped vegetables and more) now show in grams instead of ml. Liquids like milk and broth stay in ml.
 - Installed apps (such as on the Windows taskbar) now pick up the new logo instead of keeping the old cached icon. You may need to unpin and re-pin the app once.
 
 ## [0.4.0] - 2026-10-03

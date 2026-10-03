@@ -20,7 +20,7 @@ interface Props {
 export function ListItemRow({ item, aisles, unitSystem, onToggle, onEdit, onDelete, onMove }: Props) {
   const [open, setOpen] = useState(false);
   const phone = useIsPhone();
-  const amount = formatAmounts(item.amounts, unitSystem);
+  const amount = formatAmounts(item.amounts, unitSystem, item.name);
   const editText = itemEditText(item, unitSystem);
   const [draft, setDraft] = useState(editText);
 

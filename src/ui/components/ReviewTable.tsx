@@ -13,7 +13,7 @@ interface Props {
 function parsedSummary(line: IngredientLine, system: UnitSystem): string {
   if (line.isHeader) return 'Section heading';
   const formatted = line.quantity
-    ? formatAmount({ quantity: line.quantity, ...(line.unit ? { unit: line.unit } : {}), ...(line.packageSize ? { packageSize: line.packageSize } : {}) }, system)
+    ? formatAmount({ quantity: line.quantity, ...(line.unit ? { unit: line.unit } : {}), ...(line.packageSize ? { packageSize: line.packageSize } : {}) }, system, line.item)
     : '';
   const amount = formatted || 'no amount';
   const notes = line.notes ? ` (${line.notes})` : '';

@@ -17,6 +17,7 @@ function lineText(line: IngredientLine, system: UnitSystem): string {
   const amount = formatAmount(
     { quantity: line.quantity, ...(line.unit ? { unit: line.unit } : {}), ...(line.packageSize ? { packageSize: line.packageSize } : {}) },
     system,
+    line.item,
   );
   if (!amount || !line.item) return line.raw;
   return `${amount} ${line.item}${line.notes ? `, ${line.notes}` : ''}`;

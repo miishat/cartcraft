@@ -48,7 +48,7 @@ export function groupListItems(items: ListItem[], aisles: Aisle[]): ListView {
 }
 
 export function itemLabel(item: ListItem, system: UnitSystem): string {
-  const amount = formatAmounts(item.amounts, system);
+  const amount = formatAmounts(item.amounts, system, item.name);
   const name = item.name.charAt(0).toUpperCase() + item.name.slice(1);
   return amount ? `${name}: ${amount}` : name;
 }
@@ -58,7 +58,7 @@ export function itemLabel(item: ListItem, system: UnitSystem): string {
  * ("2 cups milk, whole") all survive an edit.
  */
 export function itemEditText(item: ListItem, system: UnitSystem): string {
-  const amount = formatAmounts(item.amounts, system);
+  const amount = formatAmounts(item.amounts, system, item.name);
   const base = amount ? `${amount} ${item.name}` : item.name;
   return item.notes ? `${base}, ${item.notes}` : base;
 }
