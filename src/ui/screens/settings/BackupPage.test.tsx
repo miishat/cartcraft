@@ -16,7 +16,7 @@ async function backupText(): Promise<string> {
   return serializeBackup(await exportBackup(source, 1));
 }
 
-describe('Backup and restore page', () => {
+describe('Backup & Restore page', () => {
   it('exports a backup file', async () => {
     const createObjectURL = vi.fn(() => 'blob:backup');
     vi.stubGlobal('URL', Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() }));

@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Plus, Sparkles } from 'lucide-react';
+import { Plus, RefreshCw, Sparkles } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router';
 import type { ListItem } from '../../domain';
@@ -184,14 +184,16 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
             <Sparkles size={14} /> {sortAction.pending ? 'Sorting...' : `Sort ${unknownCount} unknown ${unknownCount === 1 ? 'item' : 'items'} with AI`}
           </button>
         )}
-        <button
-          type="button"
-          onClick={() => void extrasAction.run()}
-          disabled={!hasAi || extrasAction.pending || list.items.length === 0}
-          className="inline-flex items-center gap-1 rounded-xl bg-white px-3 py-1.5 ring-1 ring-slate-200 disabled:opacity-40"
-        >
-          <Sparkles size={14} /> {extrasAction.pending ? 'Thinking...' : list.extras ? 'Refresh swaps & tips' : 'Add swaps & tips'}
-        </button>
+        {!list.extras && (
+          <button
+            type="button"
+            onClick={() => void extrasAction.run()}
+            disabled={!hasAi || extrasAction.pending || list.items.length === 0}
+            className="inline-flex items-center gap-1 rounded-xl bg-white px-3 py-1.5 ring-1 ring-slate-200 disabled:opacity-40"
+          >
+            <Sparkles size={14} /> {extrasAction.pending ? 'Thinking...' : 'Add swaps & tips'}
+          </button>
+        )}
         {!hasAi && (
           <span className="text-xs text-slate-500">
             <Link to="/settings/ai" className="underline">Add an AI key in Settings</Link> to use these.
@@ -244,11 +246,22 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
         </section>
       )}
 
-      {!filtered && list.extras && (list.extras.swaps.length > 0 || list.extras.tips.length > 0) && (
+      {!filtered && list.extras && (
         <section aria-label="Swaps & tips" className="space-y-2 rounded-2xl bg-linear-to-br from-tint-purple-bg to-tint-amber-bg p-4 text-sm text-slate-700">
-          <h2 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-tint-purple-fg">
-            <Sparkles size={14} aria-hidden="true" /> Swaps & tips (AI suggestions)
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-tint-purple-fg">
+              <Sparkles size={14} aria-hidden="true" /> Swaps & tips (AI suggestions)
+            </h2>
+            <button
+              type="button"
+              onClick={() => void extrasAction.run()}
+              disabled={!hasAi || extrasAction.pending || list.items.length === 0}
+              className="ml-auto inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-tint-purple-fg ring-1 ring-tint-purple-fg/30 disabled:opacity-40"
+            >
+              <RefreshCw size={12} aria-hidden="true" /> {extrasAction.pending ? 'Thinking...' : 'Regenerate'}
+            </button>
+          </div>
+          {list.extras.swaps.length === 0 && list.extras.tips.length === 0 && <p>No swaps or tips for this list.</p>}
           {list.extras.swaps.length > 0 && (
             <ul className="space-y-1">
               {list.extras.swaps.map((s, i) => (

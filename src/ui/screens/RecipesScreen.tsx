@@ -1,10 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Check, Plus, ShoppingBasket } from 'lucide-react';
+import { Check, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { newId } from '../../app/ids';
 import { listNameSuggestions } from '../../app/listNames';
 import { createList, defaultListName } from '../../app/lists';
+import { AppLogo } from '../components/AppLogo';
 import { NameListSheet } from '../components/NameListSheet';
 import { RecipeCover } from '../components/RecipeCover';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -127,11 +128,11 @@ export function RecipesScreen({ makeId = newId, now = Date.now }: Props) {
           <button
             type="button"
             onClick={() => setNaming(true)}
-            aria-label={`Build list (${selected.size})`}
-            className="mx-auto flex w-full max-w-2xl items-center gap-3 rounded-2xl bg-slate-900 px-4 py-3.5 font-semibold text-white shadow-lg disabled:opacity-50"
+            aria-label={`Build List (${selected.size})`}
+            className="mx-auto flex w-full max-w-2xl items-center gap-3 rounded-2xl bg-emerald-100 px-4 py-3.5 font-semibold text-emerald-900 shadow-lg ring-1 ring-emerald-200 disabled:opacity-50"
           >
-            <ShoppingBasket size={18} aria-hidden="true" /> Build list
-            <span className="ml-auto text-sm font-normal text-slate-300">
+            <AppLogo className="h-6 w-6" /> Build List
+            <span className="ml-auto text-sm font-normal text-emerald-800">
               {plural(selected.size, 'recipe')} · {plural(ingredientCount, 'ingredient')}
             </span>
           </button>

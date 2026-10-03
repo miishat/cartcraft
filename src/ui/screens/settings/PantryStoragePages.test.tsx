@@ -16,7 +16,7 @@ afterEach(() => {
   Reflect.deleteProperty(navigator, 'storage');
 });
 
-describe('Pantry staples page', () => {
+describe('Pantry Staples page', () => {
   it('adds and removes pantry staples', async () => {
     const { user, db } = renderRoutes(routes, '/settings/pantry');
     expect(await screen.findByText('salt')).toBeInTheDocument();

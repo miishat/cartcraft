@@ -15,7 +15,7 @@ test.afterAll(() => serve('e2e/.current'));
 test('a new deploy shows the update prompt, and Reload switches to it', async ({ page, request }) => {
   await page.goto('/settings');
   await waitForServiceWorker(page);
-  const current = await page.getByText(/CartCraft version/).textContent();
+  const current = await page.getByText(/^\s*CartCraft \S+\s*$/).textContent();
   expect(current).not.toContain('e2e-next');
 
   serve('e2e/.next');
@@ -30,5 +30,5 @@ test('a new deploy shows the update prompt, and Reload switches to it', async ({
   await expect(page.getByText(current!)).toBeVisible();
 
   await toast.getByRole('button', { name: 'Reload' }).click();
-  await expect(page.getByText('CartCraft version e2e-next')).toBeVisible();
+  await expect(page.getByText('CartCraft e2e-next')).toBeVisible();
 });

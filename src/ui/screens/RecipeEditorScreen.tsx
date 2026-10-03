@@ -59,6 +59,8 @@ export function RecipeEditorScreen({
   const [importNote, setImportNote] = useState<string | null>(null);
   /** A link whose page had no recipe data; AI can still read its text. */
   const [aiUrl, setAiUrl] = useState<string | null>(null);
+  /** The text AI last cleaned up; the button hides until the text changes. */
+  const [cleanedText, setCleanedText] = useState<string | null>(null);
 
   useEffect(() => {
     if (id === undefined) return;
@@ -107,6 +109,7 @@ export function RecipeEditorScreen({
     importLink.clearError();
     tryWithAi.clearError();
     applyAiDraft(await runCleanUp(text), text);
+    setCleanedText(text);
   }, 'AI clean-up failed. Use Parse ingredients instead.');
 
   const tryWithAi = useAsyncAction(async (url: string) => {
@@ -237,14 +240,16 @@ export function RecipeEditorScreen({
             >
               {lines ? 'Parse again' : 'Parse ingredients'}
             </button>
-            <button
-              type="button"
-              onClick={() => void cleanUpText.run(rawText)}
-              disabled={!hasAi || !rawText.trim() || cleanUpText.pending}
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium disabled:opacity-40"
-            >
-              <Sparkles size={16} /> {cleanUpText.pending ? 'Cleaning up...' : 'Clean up with AI'}
-            </button>
+            {cleanedText !== rawText && (
+              <button
+                type="button"
+                onClick={() => void cleanUpText.run(rawText)}
+                disabled={!hasAi || !rawText.trim() || cleanUpText.pending}
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium disabled:opacity-40"
+              >
+                <Sparkles size={16} /> {cleanUpText.pending ? 'Cleaning up...' : 'Clean up with AI'}
+              </button>
+            )}
             {!hasAi && (
               <span className="text-xs text-slate-500">
                 <Link to="/settings/ai" className="underline">Add an AI key in Settings</Link> to use AI clean-up.

@@ -25,7 +25,7 @@ export function ServingsPage() {
   const set = (n: number) => void save.run(() => updateSettings(db, { defaultServings: n }));
 
   return (
-    <SettingsPage title="Default servings" hint="Recipes start at this many servings when you pick them for a list, and new recipes use it when they don't say.">
+    <SettingsPage title="Default Servings" hint="Recipes start at this many servings when you pick them for a list, and new recipes use it when they don't say.">
       <div className={`${CARD} flex items-center justify-center gap-5 p-5`}>
         <button type="button" aria-label="Fewer servings" disabled={value <= 1} onClick={() => set(value - 1)} className={STEP}>
           <Minus size={18} aria-hidden="true" />
@@ -34,7 +34,7 @@ export function ServingsPage() {
           type="number"
           min={1}
           max={MAX}
-          aria-label="Default servings"
+          aria-label="Default Servings"
           value={draft}
           onChange={(e) => {
             setDraft(e.target.value);

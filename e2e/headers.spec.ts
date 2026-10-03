@@ -22,11 +22,12 @@ test('the app runs under the CSP without violations', async ({ page }) => {
 
   await addRecipe(page, 'Salad', '1 head lettuce\n2 tomatoes');
   await page.getByRole('button', { name: 'Select Salad' }).click();
-  await page.getByRole('button', { name: /Build list \(1\)/ }).click();
+  await page.getByRole('button', { name: /Build List \(1\)/ }).click();
+  await page.getByRole('button', { name: 'Create list' }).click();
   await expect(page.getByRole('button', { name: 'Tomatoes: 2' })).toBeVisible();
   await page.getByRole('link', { name: 'Lists' }).first().click();
   await page.getByRole('link', { name: 'Settings' }).first().click();
-  await expect(page.getByText(/CartCraft version/)).toBeVisible();
+  await expect(page.getByText(/^\s*CartCraft \S+\s*$/)).toBeVisible();
 
   expect(violations).toEqual([]);
 });

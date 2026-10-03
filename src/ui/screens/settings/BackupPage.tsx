@@ -128,7 +128,7 @@ export function BackupPage({ now = Date.now }: { now?: () => number }) {
 
   return (
     <SettingsPage
-      title="Backup and restore"
+      title="Backup & Restore"
       hint="Your data lives only on this device. Export a backup to move it or keep it safe. Your AI key is never included."
     >
       <ul className={CARD_LIST}>

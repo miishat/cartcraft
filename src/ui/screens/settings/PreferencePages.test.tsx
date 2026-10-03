@@ -57,10 +57,10 @@ describe('Units page', () => {
   });
 });
 
-describe('Default servings page', () => {
+describe('Default Servings page', () => {
   it('steps up and down and saves a typed number', async () => {
     const { user, db } = renderRoutes(routes, '/settings/servings');
-    const input = await screen.findByLabelText('Default servings');
+    const input = await screen.findByLabelText('Default Servings');
     await waitFor(() => expect(input).toHaveValue(4));
     await user.click(screen.getByRole('button', { name: 'More servings' }));
     await waitFor(async () => expect((await getSettings(db)).defaultServings).toBe(5));
@@ -76,7 +76,7 @@ describe('Default servings page', () => {
 
   it('never saves a typed number above 99', async () => {
     const { user, db } = renderRoutes(routes, '/settings/servings');
-    const input = await screen.findByLabelText('Default servings');
+    const input = await screen.findByLabelText('Default Servings');
     await waitFor(() => expect(input).toHaveValue(4));
     await user.clear(input);
     await user.type(input, '150');
@@ -88,7 +88,7 @@ describe('Default servings page', () => {
 
   it('keeps what is typed while the input is focused', async () => {
     const { user, db } = renderRoutes(routes, '/settings/servings');
-    const input = await screen.findByLabelText('Default servings');
+    const input = await screen.findByLabelText('Default Servings');
     await waitFor(() => expect(input).toHaveValue(4));
     await user.clear(input);
     await user.type(input, '12');
@@ -98,7 +98,7 @@ describe('Default servings page', () => {
 
   it('ignores a cleared field and restores the saved number on blur', async () => {
     const { user, db } = renderRoutes(routes, '/settings/servings');
-    const input = await screen.findByLabelText('Default servings');
+    const input = await screen.findByLabelText('Default Servings');
     await waitFor(() => expect(input).toHaveValue(4));
     await user.clear(input);
     await user.tab();

@@ -59,8 +59,24 @@ describe('ListScreen: AI', () => {
     const section = await screen.findByRole('region', { name: 'Swaps & tips' });
     expect(section).toHaveTextContent('saffron: a pinch of turmeric');
     expect(section).toHaveTextContent('Freeze leftover onion.');
-    expect(screen.getByRole('button', { name: 'Refresh swaps & tips' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add swaps & tips' })).not.toBeInTheDocument();
+    expect(within(section).getByRole('button', { name: 'Regenerate' })).toBeInTheDocument();
     expect((await db.lists.get(listId))?.extras?.generatedAt).toBe(77);
+  });
+
+  it('regenerates swaps and tips from the section, and keeps it when the AI has none', async () => {
+    const { db, listId } = await seeded(true);
+    const fetchImpl = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ swaps: [], tips: ['Buy ripe.'] }) } }] })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ swaps: [], tips: [] }) } }] })));
+    const { user } = render(db, listId, fetchImpl as unknown as ReturnType<typeof reply>);
+    const add = await screen.findByRole('button', { name: 'Add swaps & tips' });
+    await waitFor(() => expect(add).toBeEnabled());
+    await user.click(add);
+    const section = await screen.findByRole('region', { name: 'Swaps & tips' });
+    await waitFor(() => expect(section).toHaveTextContent('Buy ripe.'));
+    await user.click(within(section).getByRole('button', { name: 'Regenerate' }));
+    await waitFor(() => expect(screen.getByRole('region', { name: 'Swaps & tips' })).toHaveTextContent('No swaps or tips for this list.'));
   });
 
   it('shows provider errors inline', async () => {

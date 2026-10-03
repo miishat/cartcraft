@@ -66,6 +66,19 @@ describe('RecipeEditorScreen: AI', () => {
     expect(screen.getAllByLabelText('Check this line')).toHaveLength(1);
   });
 
+  it('hides Clean up with AI after a clean-up until the text changes', async () => {
+    const { user } = await setup();
+    const field = screen.getByLabelText('Ingredients');
+    await user.type(field, 'Grandma used 2 cups flour and eggs');
+    const button = await screen.findByRole('button', { name: 'Clean up with AI' });
+    await vi.waitFor(() => expect(button).toBeEnabled());
+    await user.click(button);
+    expect(await screen.findByText('Review (2 lines)')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Clean up with AI' })).not.toBeInTheDocument();
+    await user.type(field, ' and milk');
+    expect(screen.getByRole('button', { name: 'Clean up with AI' })).toBeInTheDocument();
+  });
+
   it('keeps servings the user already entered', async () => {
     const { user } = await setup();
     await user.type(screen.getByLabelText('Ingredients'), 'Grandma used 2 cups flour and eggs');

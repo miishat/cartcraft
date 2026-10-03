@@ -21,7 +21,7 @@ export function PantryPage() {
   };
 
   return (
-    <SettingsPage title="Pantry staples" hint={'These go in a "Check pantry" section instead of an aisle.'}>
+    <SettingsPage title="Pantry Staples" hint={'These go in a "Check pantry" section instead of an aisle.'}>
       {pantry && pantry.length > 0 && (
         <ul className={`${CARD} flex flex-wrap gap-2 p-3`}>
           {pantry.map((p) => (

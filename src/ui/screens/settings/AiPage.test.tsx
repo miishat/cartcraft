@@ -23,7 +23,7 @@ afterEach(() => {
 describe('AI helper page', () => {
   it('saves provider and model, and saves the key without exporting it', async () => {
     const { user, db } = renderRoutes(routes, '/settings/ai');
-    expect(screen.getByRole('heading', { level: 1, name: 'AI helper' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'AI Helper' })).toBeInTheDocument();
     expect(screen.getByRole('group', { name: 'Provider' })).toBeInTheDocument();
     await user.click(await screen.findByRole('radio', { name: 'OpenRouter' }));
     await waitFor(async () => expect((await getSettings(db)).llm.providerId).toBe('openrouter'));
