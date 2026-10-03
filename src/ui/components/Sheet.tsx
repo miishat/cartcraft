@@ -13,18 +13,21 @@ export function Sheet({ title, onClose, children }: { title: string; onClose: ()
   const panel = useRef<HTMLDivElement>(null);
   const dragFrom = useRef<number | null>(null);
 
+  const latestClose = useRef(onClose);
+  latestClose.current = onClose;
+
   useEffect(() => {
     panel.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') latestClose.current();
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, []);
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center md:p-4">
-      <div data-testid="sheet-backdrop" className="absolute inset-0 bg-black/40 animate-[fade-in_150ms_ease-out]" onClick={onClose} />
+      <div data-testid="sheet-backdrop" className="absolute inset-0 bg-slate-950/40 animate-[fade-in_150ms_ease-out]" onClick={onClose} />
       <div
         ref={panel}
         role="dialog"

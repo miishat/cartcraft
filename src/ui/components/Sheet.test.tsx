@@ -40,4 +40,23 @@ describe('Sheet', () => {
     fireEvent.pointerUp(handle, { clientY: 220 });
     expect(onClose).toHaveBeenCalledOnce();
   });
+
+  it('keeps focus and uses the latest onClose when the parent re-renders', () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    const ui = (onClose: () => void) => (
+      <Sheet title="T" onClose={onClose}>
+        <button type="button">First</button>
+        <input aria-label="Name" />
+      </Sheet>
+    );
+    const { rerender } = render(ui(first));
+    const input = screen.getByLabelText('Name');
+    input.focus();
+    rerender(ui(second));
+    expect(input).toHaveFocus();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(first).not.toHaveBeenCalled();
+    expect(second).toHaveBeenCalledOnce();
+  });
 });
