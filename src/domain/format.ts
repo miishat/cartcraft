@@ -1,4 +1,5 @@
 import type { Amount, PackageSize, UnitId, UnitSystem } from './types';
+import { solidDensity } from './density';
 import { dimensionOf, getUnit, isPackagedUnit, toBaseUnits, unitLabel } from './units';
 
 interface Step {
@@ -111,15 +112,19 @@ function withRange(min: string, max: string | undefined): string {
 }
 
 /** Formats one amount in the user's unit system. Counts and discrete units round up. */
-export function formatAmount(amount: Amount, system: UnitSystem): string {
+export function formatAmount(amount: Amount, system: UnitSystem, item?: string): string {
   const { quantity, unit, packageSize } = amount;
   if (quantity.min <= 0 && (quantity.max ?? 0) <= 0) return '';
   const dimension = dimensionOf(unit);
 
   if (unit !== undefined && (dimension === 'volume' || dimension === 'mass')) {
-    const minBase = toBaseUnits(quantity.min, unit);
-    const maxBase = quantity.max === undefined ? undefined : toBaseUnits(quantity.max, unit);
-    const picked = dimension === 'volume' ? pickVolume(minBase, system) : pickMass(minBase, system);
+    // Metric cooks weigh solids: a volume of butter or parsley shows in grams, not mL.
+    const density = system === 'metric' && dimension === 'volume' ? solidDensity(item) : undefined;
+    const factor = density ?? 1;
+    const minBase = toBaseUnits(quantity.min, unit) * factor;
+    const maxBase = quantity.max === undefined ? undefined : toBaseUnits(quantity.max, unit) * factor;
+    const asMass = dimension === 'mass' || density !== undefined;
+    const picked = asMass ? pickMass(minBase, system) : pickVolume(minBase, system);
     if (picked === 'pinch') return 'pinch';
     const min = picked.render(minBase);
     const max = maxBase === undefined ? undefined : picked.render(maxBase);
@@ -137,6 +142,6 @@ export function formatAmount(amount: Amount, system: UnitSystem): string {
   return `${count} ${label}`;
 }
 
-export function formatAmounts(amounts: Amount[], system: UnitSystem): string {
-  return amounts.map((a) => formatAmount(a, system)).filter(Boolean).join(' + ');
+export function formatAmounts(amounts: Amount[], system: UnitSystem, item?: string): string {
+  return amounts.map((a) => formatAmount(a, system, item)).filter(Boolean).join(' + ');
 }
