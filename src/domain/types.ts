@@ -14,6 +14,12 @@ export interface PackageSize {
   unit: UnitId;
 }
 
+/** One line of a recipe's method. Section names such as "Crispy onions" are headers. */
+export interface RecipeStep {
+  text: string;
+  isHeader: boolean;
+}
+
 export interface IngredientLine {
   id: string;
   /** Original text, never discarded. */

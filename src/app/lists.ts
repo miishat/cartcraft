@@ -10,8 +10,10 @@ export interface Selection {
 }
 
 export function defaultListName(now: number): string {
-  const date = new Date(now).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  return `Shopping list, ${date}`;
+  const d = new Date(now);
+  const weekday = d.toLocaleDateString('en-US', { weekday: 'short' });
+  const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return `Groceries, ${weekday} ${date}`;
 }
 
 async function loadClassifier(db: CartCraftDb): Promise<(itemKey: string) => string> {
@@ -25,6 +27,7 @@ export async function createList(
   selections: Selection[],
   now: number,
   makeId: () => string,
+  name?: string,
 ): Promise<string> {
   const recipes = await db.recipes.bulkGet(selections.map((s) => s.recipeId));
   const chosen = selections.flatMap((s, i) => {
@@ -47,7 +50,7 @@ export async function createList(
 
   const list: ShoppingList = {
     id: makeId(),
-    name: defaultListName(now),
+    name: name?.trim() || defaultListName(now),
     createdAt: now,
     sources: chosen.map(({ recipe, targetServings }) => ({ recipeId: recipe.id, title: recipe.title, targetServings })),
     items,

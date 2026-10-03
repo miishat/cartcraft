@@ -1,9 +1,12 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { ArrowLeft, Pencil } from 'lucide-react';
-import { useState } from 'react';
+import { ExternalLink, Pencil } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
+import { fetchMissingSteps } from '../../app/recipes';
 import { formatAmount, scaleLine, type IngredientLine, type UnitSystem } from '../../domain';
+import type { UrlImportResult } from '../../services/urlImport';
 import { RecipeCover } from '../components/RecipeCover';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { ServingsStepper } from '../components/ServingsStepper';
 import { useDb } from '../db';
 import { useSettings } from '../hooks';
@@ -19,13 +22,26 @@ function lineText(line: IngredientLine, system: UnitSystem): string {
   return `${amount} ${line.item}${line.notes ? `, ${line.notes}` : ''}`;
 }
 
+interface Props {
+  importRecipe?: (url: string) => Promise<UrlImportResult>;
+}
+
 /** Read-only recipe page (/recipes/:id/view) with a servings stepper that scales what is shown. */
-export function RecipeViewScreen() {
+export function RecipeViewScreen({ importRecipe }: Props = {}) {
   const { id = '' } = useParams();
   const db = useDb();
   const settings = useSettings();
   const recipe = useLiveQuery(async () => (await db.recipes.get(id)) ?? null, [db, id]);
   const [servings, setServings] = useState<number | null>(null);
+  const [fetching, setFetching] = useState(false);
+  const needsSteps = recipe?.steps === undefined && /^https?:\/\//i.test(recipe?.sourceUrl ?? '');
+  useEffect(() => {
+    if (!needsSteps) return;
+    setFetching(true);
+    void fetchMissingSteps(db, id, importRecipe)
+      .catch(() => undefined)
+      .finally(() => setFetching(false));
+  }, [db, id, needsSteps, importRecipe]);
 
   if (recipe === undefined) return null;
   if (recipe === null) {
@@ -42,23 +58,21 @@ export function RecipeViewScreen() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-5">
-      <Link to="/" className="inline-flex items-center gap-1 text-sm font-medium text-slate-600">
-        <ArrowLeft size={16} /> Recipes
-      </Link>
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-4">
-          <RecipeCover recipe={recipe} size="lg" />
-          <h1 className="text-[28px] font-bold leading-tight tracking-tight text-slate-900">{recipe.title}</h1>
-        </div>
-        <Link
-          to={`/recipes/${recipe.id}`}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
-        >
-          <Pencil size={14} /> Edit
-        </Link>
-      </div>
+      <ScreenHeader
+        title={recipe.title}
+        back={{ to: '/', label: 'Recipes' }}
+        actions={
+          <Link
+            to={`/recipes/${recipe.id}`}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+          >
+            <Pencil size={14} /> Edit
+          </Link>
+        }
+      />
 
       <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
+        <RecipeCover recipe={recipe} size="lg" />
         Serves
         <ServingsStepper value={target} onChange={setServings} label={recipe.title} />
         {target !== recipe.baseServings && (
@@ -79,15 +93,26 @@ export function RecipeViewScreen() {
         </ul>
       </section>
 
-      {recipe.sourceUrl && (
-        <p className="truncate text-sm text-slate-500">
-          Source:{' '}
-          {/^https?:\/\//i.test(recipe.sourceUrl) ? (
-            <a href={recipe.sourceUrl} target="_blank" rel="noreferrer noopener" className="underline">{recipe.sourceUrl}</a>
-          ) : (
-            recipe.sourceUrl
-          )}
-        </p>
+      {recipe.steps && recipe.steps.length > 0 && (
+        <section aria-label="Method" className="space-y-2">
+          <h2 className="text-sm font-medium text-slate-700">Method</h2>
+          <ol className="space-y-3 rounded-2xl bg-white p-4 ring-1 ring-slate-200">
+            {recipe.steps.map((step, i) =>
+              step.isHeader ? (
+                <li key={i} className="pt-1"><h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{step.text}</h3></li>
+              ) : (
+                <li key={i} className="leading-relaxed text-slate-800">{step.text}</li>
+              ),
+            )}
+          </ol>
+        </section>
+      )}
+      {needsSteps && fetching && <p role="status" className="text-sm text-slate-500">Getting the method from the recipe page...</p>}
+
+      {recipe.sourceUrl && /^https?:\/\//i.test(recipe.sourceUrl) && (
+        <a href={recipe.sourceUrl} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1 text-sm font-medium text-emerald-800 hover:underline">
+          View original <ExternalLink size={14} aria-hidden="true" />
+        </a>
       )}
     </div>
   );

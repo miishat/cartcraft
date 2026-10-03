@@ -22,6 +22,14 @@ async function setup() {
 }
 
 describe('createList', () => {
+  it('stores a given name and falls back to the default for a blank one', async () => {
+    const { db, tacos } = await setup();
+    const named = await createList(db, [{ recipeId: tacos, targetServings: 4 }], 1, sequentialIds('n'), '  Biryani night ');
+    expect((await db.lists.get(named))!.name).toBe('Biryani night');
+    const blank = await createList(db, [{ recipeId: tacos, targetServings: 4 }], 1, sequentialIds('b'), '   ');
+    expect((await db.lists.get(blank))!.name).toBe(defaultListName(1));
+  });
+
   it('builds a named snapshot from the selected recipes with per-recipe servings', async () => {
     const { db, tacos, soup } = await setup();
     const now = Date.UTC(2026, 9, 1, 12);

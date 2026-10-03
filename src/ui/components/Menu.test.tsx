@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { mockViewport } from '../../test/matchMedia';
 import { Menu, MenuCheckbox, MenuItem } from './Menu';
 
 function Harness({ onRename = () => undefined }: { onRename?: () => void }) {
@@ -20,6 +21,8 @@ function Harness({ onRename = () => undefined }: { onRename?: () => void }) {
 }
 
 describe('Menu', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
   it('opens on click and focuses the first item', async () => {
     const user = userEvent.setup();
     render(<Harness />);
@@ -90,5 +93,43 @@ describe('Menu', () => {
     await user.click(button);
     await user.click(button);
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  });
+
+  it('opens as a bottom sheet on a phone', async () => {
+    mockViewport(true);
+    const user = userEvent.setup();
+    render(<Harness />);
+    await user.click(screen.getByRole('button', { name: 'List options' }));
+    const sheet = screen.getByRole('dialog', { name: 'List options' });
+    expect(within(sheet).getByRole('menuitem', { name: /Rename list/ })).toBeInTheDocument();
+    await user.click(within(sheet).getByRole('menuitem', { name: /Rename list/ }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('closes the phone sheet on a backdrop tap', async () => {
+    mockViewport(true);
+    const user = userEvent.setup();
+    render(<Harness />);
+    await user.click(screen.getByRole('button', { name: 'List options' }));
+    await user.click(screen.getByTestId('sheet-backdrop'));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('opens as a popover on a wide screen', async () => {
+    mockViewport(false);
+    const user = userEvent.setup();
+    render(<Harness />);
+    await user.click(screen.getByRole('button', { name: 'List options' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.getByRole('menu', { name: 'List options' })).toBeInTheDocument();
+  });
+
+  it('stays open when a phone sheet is pressed outside the menu card', async () => {
+    mockViewport(true);
+    const user = userEvent.setup();
+    render(<Harness />);
+    await user.click(screen.getByRole('button', { name: 'List options' }));
+    await user.pointer({ keys: '[MouseLeft]', target: screen.getByRole('heading', { name: 'List options' }) });
+    expect(screen.getByRole('menu')).toBeInTheDocument();
   });
 });

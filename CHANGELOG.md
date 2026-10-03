@@ -4,7 +4,19 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-03
+
+### Added
+- Six colour palettes in Settings > Appearance: Basil, Tomato, Blueberry, Saffron, Plum and Paper. Each works in light and dark.
+- Building a list asks for its name, filled in as "Groceries, Fri Oct 2", with suggestions from the recipes you picked (such as "Biryani + Tacos") and the day ("Weekend shop").
+- Recipe pages show the method steps from the recipe site, grouped by section, with a View original link. Recipes imported earlier fetch their steps the first time you open them.
+
 ### Changed
+- The CartCraft logo has rounded corners in the app, the browser tab and the installed app icon.
+- The Appearance mode choice "Match my device" is now called "System".
+- On phones the logo bar at the top is gone. Each screen has its own header with its title, a way back and its actions, such as + Add on Recipes and ⋯ on a list.
+- Recipes no longer shows "Pick recipes for your next list", and its Add recipe button is now "+ Add".
+- On phones, the ⋯ menu and each item's options open as a sheet from the bottom of the screen instead of in place. Swipe it down or tap outside to close.
 - Aisles on shopping lists show a food emoji (🥕 🥩 🥛 🥐 ...) on their coloured badge instead of a line icon.
 - Rename list, Copy list as text and Keep screen on moved into a ⋯ menu at the top of a shopping list.
 - Settings is a short page of rows, each opening its own page: Appearance, Units, Default servings, Aisles, Pantry staples, AI helper, Backup and restore, and Storage. Each row shows what is set.
@@ -12,6 +24,15 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 - The AI provider is picked from a list instead of a dropdown, and "Add an AI key in Settings" links straight to the AI helper page.
 - The Default servings number field now ignores values above 99.
 - Settings rows, Backup buttons and choice lists show a clear outline when reached with the keyboard.
+- In US units, weights of half a pound or more show in pounds (rounded to a quarter pound) instead of ounces, for example "3/4 lb" instead of "13 1/4 oz".
+- A recipe whose source is not a web address no longer shows that source text on its page.
+- Scrollbars are hidden everywhere in the app; scrolling works as before.
+- The add item bar on a shopping list stands out from the list: a stronger outline, a filled + button on the left, and the list fades out behind it.
+
+### Fixed
+- Recipes saved before this version are re-read once with the fixed ingredient reader, so lines like "Chicken thighs )" are repaired. Shopping lists already built are not changed.
+- Add swaps & tips works with replies that have extra text, too many suggestions or a long thinking step, and AI errors now say what went wrong (a rejected model name, or a reply cut off).
+- Imported ingredient lines with brackets inside brackets (common on RecipeTin Eats) no longer show stray ")" or "(" in the name or notes, "Note 1" references are dropped, and a repeated amount in other units such as "(1.5 lb)" is no longer shown as a note.
 
 ## [0.3.0] - 2026-10-02
 

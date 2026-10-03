@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { Link2, Sparkles, Trash2 } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import type { IngredientLine } from '../../domain';
+import type { IngredientLine, RecipeStep } from '../../domain';
 import { aiCleanUpText, hasUsableAiKey, type AiDraft } from '../../app/ai';
 import { newId } from '../../app/ids';
 import { deleteRecipe, draftLinesFromText, requestPersistence, saveRecipe } from '../../app/recipes';
@@ -11,6 +11,7 @@ import {
 } from '../../services/urlImport';
 import { ConfirmDialog } from '../components/Dialog';
 import { ErrorNote } from '../components/ErrorNote';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { ReviewTable } from '../components/ReviewTable';
 import { useDb } from '../db';
 import { useSettings } from '../hooks';
@@ -54,6 +55,7 @@ export function RecipeEditorScreen({
   const [lines, setLines] = useState<IngredientLine[] | null>(null);
   const [sourceUrl, setSourceUrl] = useState<string | undefined>();
   const [yieldText, setYieldText] = useState<string | undefined>();
+  const [steps, setSteps] = useState<RecipeStep[] | undefined>();
   const [importNote, setImportNote] = useState<string | null>(null);
   /** A link whose page had no recipe data; AI can still read its text. */
   const [aiUrl, setAiUrl] = useState<string | null>(null);
@@ -68,6 +70,7 @@ export function RecipeEditorScreen({
         setLines(recipe.ingredients);
         setSourceUrl(recipe.sourceUrl);
         setYieldText(recipe.yieldText);
+        setSteps(recipe.steps);
       } else {
         setMissing(true);
       }
@@ -117,6 +120,7 @@ export function RecipeEditorScreen({
     }
     const draft = await runCleanUp(page.text);
     setSourceUrl(page.sourceUrl);
+    setSteps(undefined);
     setAiUrl(null);
     applyAiDraft(draft, draft.lines.map((l) => l.raw).join('\n'));
   }, 'AI could not read that page. Copy the ingredient list and paste it here.');
@@ -133,6 +137,7 @@ export function RecipeEditorScreen({
       if (result.error === 'no_recipe_data') setAiUrl(url.trim());
       if (pasteInstead) {
         setSourceUrl(url.trim());
+        setSteps(undefined);
         setRawText('');
       }
       return;
@@ -142,6 +147,7 @@ export function RecipeEditorScreen({
     setTitle((current) => current || recipe.title);
     setSourceUrl(recipe.sourceUrl);
     setYieldText(recipe.yieldText);
+    setSteps(recipe.steps);
     setServings(String(recipe.servings ?? settings.defaultServings));
     setServingsGuessed(recipe.servings === undefined);
     setRawText(text);
@@ -163,6 +169,7 @@ export function RecipeEditorScreen({
         ingredients: ingredients.filter((l) => l.raw.trim() !== ''),
         ...(sourceUrl ? { sourceUrl } : {}),
         ...(yieldText ? { yieldText } : {}),
+        ...(steps ? { steps } : {}),
       },
       now(),
       makeId,
@@ -193,7 +200,10 @@ export function RecipeEditorScreen({
 
   return (
     <form onSubmit={onSave} className="mx-auto max-w-2xl space-y-6">
-      <h1 className="text-2xl font-semibold text-slate-900">{id ? 'Edit recipe' : 'Add recipe'}</h1>
+      <ScreenHeader
+        title={id ? 'Edit recipe' : 'Add recipe'}
+        back={id ? { to: `/recipes/${id}/view`, label: 'Recipe' } : { to: '/', label: 'Recipes' }}
+      />
 
       <section className="space-y-2">
         <label htmlFor="raw" className="block text-sm font-medium text-slate-700">Ingredients</label>

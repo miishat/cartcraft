@@ -5,6 +5,30 @@ const URL = 'https://example.com/recipes/tacos';
 const block = (data: unknown) => JSON.stringify(data);
 
 describe('extractRecipe', () => {
+  it('reads steps and section names from recipeInstructions', () => {
+    const draft = extractRecipe([block({
+      '@type': 'Recipe', name: 'Biryani', recipeIngredient: ['1 onion'],
+      recipeInstructions: [
+        { '@type': 'HowToStep', text: 'Mix marinade.' },
+        { '@type': 'HowToSection', name: 'Crispy Onions:', itemListElement: [
+          { '@type': 'HowToStep', text: 'Heat <b>oil</b>.' },
+          { '@type': 'HowToStep', name: 'Fry onion.' },
+        ] },
+      ],
+    })], URL);
+    expect(draft?.steps).toEqual([
+      { text: 'Mix marinade.', isHeader: false },
+      { text: 'Crispy Onions', isHeader: true },
+      { text: 'Heat oil.', isHeader: false },
+      { text: 'Fry onion.', isHeader: false },
+    ]);
+  });
+
+  it('reads steps from a plain string', () => {
+    const draft = extractRecipe([block({ '@type': 'Recipe', name: 'Toast', recipeIngredient: ['1 bread'], recipeInstructions: 'Toast it.\nButter it.' })], URL);
+    expect(draft?.steps).toEqual([{ text: 'Toast it.', isHeader: false }, { text: 'Butter it.', isHeader: false }]);
+  });
+
   it('finds a top-level Recipe', () => {
     const draft = extractRecipe(
       [block({ '@type': 'Recipe', name: 'Tacos', recipeIngredient: ['1 lb beef', '8 tortillas'], recipeYield: '4' })],

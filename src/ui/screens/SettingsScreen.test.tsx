@@ -34,7 +34,7 @@ describe('Settings home', () => {
     const db = createTestDb();
     await saveAiKey(db, 'sk-test');
     renderRoutes(routes, '/settings', db);
-    expect(await screen.findByRole('link', { name: /^Appearance/ })).toHaveTextContent('Match device');
+    expect(await screen.findByRole('link', { name: /^Appearance/ })).toHaveTextContent('Basil, System');
     expect(screen.getByRole('link', { name: /^Units/ })).toHaveTextContent('US');
     expect(await screen.findByRole('link', { name: /^Default servings/ })).toHaveTextContent('4');
     expect(await screen.findByRole('link', { name: /^Aisles/ })).toHaveTextContent('11 aisles, your store order');

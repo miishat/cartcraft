@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { defaultListName } from '../../app/lists';
 import { formatAmounts } from '../../domain';
 import { draftLinesFromText, saveRecipe } from '../../app/recipes';
 import type { CartCraftDb } from '../../data/db';
@@ -68,9 +69,10 @@ describe('RecipesScreen', () => {
     await user.click(await screen.findByRole('button', { name: 'Select Tacos' }));
     await db.recipes.delete(id);
     await user.click(screen.getByRole('button', { name: 'Build list (1)' }));
+    await user.click(screen.getByRole('button', { name: 'Create list' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not build the list. Try again.');
     expect(screen.getByTestId('location').textContent).toBe('/');
-    expect(screen.getByRole('button', { name: 'Build list (1)' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Create list' })).toBeEnabled();
   });
 
   it('builds a list from selected recipes with per-recipe servings', async () => {
@@ -84,11 +86,26 @@ describe('RecipesScreen', () => {
     await user.click(screen.getByRole('button', { name: 'More servings for Tacos' }));
     await user.click(screen.getByRole('button', { name: 'Select Soup' }));
     await user.click(screen.getByRole('button', { name: 'Build list (2)' }));
+    await user.click(screen.getByRole('button', { name: 'Create list' }));
 
     await waitFor(() => expect(screen.getByTestId('location').textContent).toMatch(/^\/lists\//));
     const [list] = await db.lists.toArray();
     expect(list?.sources.map((s) => [s.title, s.targetServings])).toEqual([['Tacos', 6], ['Soup', 4]]);
     const byKey = Object.fromEntries(list!.items.map((i) => [i.itemKey, formatAmounts(i.amounts, 'us')]));
     expect(byKey).toEqual({ milk: '1 1/2 cups', carrot: '4' });
+    expect(list!.name).toBe(defaultListName(5));
+  });
+
+  it('names the list from a suggestion chip', async () => {
+    const db = createTestDb();
+    await addRecipe(db, 'Bread', '2 cups flour');
+    const { user } = renderRoutes(routes, '/', db);
+    await user.click(await screen.findByRole('button', { name: 'Select Bread' }));
+    await user.click(screen.getByRole('button', { name: 'Build list (1)' }));
+    await user.click(screen.getByRole('button', { name: 'Bread' }));
+    await user.click(screen.getByRole('button', { name: 'Create list' }));
+    await waitFor(() => expect(screen.getByTestId('location').textContent).toMatch(/^\/lists\//));
+    const [list] = await db.lists.toArray();
+    expect(list?.name).toBe('Bread');
   });
 });

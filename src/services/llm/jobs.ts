@@ -75,10 +75,12 @@ export interface SwapsAndTips {
   tips: string[];
 }
 
+/** Only the overall shape is required; bad entries are dropped one by one instead of failing the reply. */
 const ExtrasSchema = z.object({
-  swaps: z.array(z.object({ item: z.string().max(200), swap: z.string().max(300) })).max(30).nullish(),
-  tips: z.array(z.string().max(400)).max(10).nullish(),
+  swaps: z.array(z.unknown()).nullish(),
+  tips: z.array(z.unknown()).nullish(),
 });
+const SwapSchema = z.object({ item: z.string(), swap: z.string() });
 
 const EXTRAS_SYSTEM = `You help someone shop for recipes. Respond with a JSON object only:
 {"swaps": [{"item": string, "swap": string}], "tips": string[]}
@@ -87,14 +89,22 @@ const EXTRAS_SYSTEM = `You help someone shop for recipes. Respond with a JSON ob
 Do not mention quantities.`;
 
 export async function swapsAndTips(config: LlmConfig, itemNames: string[], fetchImpl?: FetchLike): Promise<SwapsAndTips> {
-  const raw = await chatJson(config, { system: EXTRAS_SYSTEM, user: JSON.stringify({ items: itemNames }), maxTokens: 2000 }, fetchImpl);
+  const raw = await chatJson(config, { system: EXTRAS_SYSTEM, user: JSON.stringify({ items: itemNames }), maxTokens: 8000 }, fetchImpl);
   const parsed = ExtrasSchema.safeParse(raw);
   if (!parsed.success) throw new LlmError('bad_response');
-  const known = new Set(itemNames.map((n) => n.toLowerCase()));
-  return {
-    swaps: (parsed.data.swaps ?? []).filter((s) => known.has(s.item.toLowerCase()) && s.swap.trim()).slice(0, 8),
-    tips: (parsed.data.tips ?? []).map((t) => t.trim()).filter(Boolean).slice(0, 5),
-  };
+  const byLower = new Map(itemNames.map((n) => [n.toLowerCase(), n]));
+  const swaps = (parsed.data.swaps ?? []).flatMap((entry) => {
+    const swap = SwapSchema.safeParse(entry);
+    if (!swap.success) return [];
+    const item = byLower.get(swap.data.item.trim().toLowerCase());
+    const text = swap.data.swap.trim().slice(0, 300);
+    return item && text ? [{ item, swap: text }] : [];
+  });
+  const tips = (parsed.data.tips ?? [])
+    .filter((t): t is string => typeof t === 'string')
+    .map((t) => t.trim().slice(0, 400))
+    .filter(Boolean);
+  return { swaps: swaps.slice(0, 8), tips: tips.slice(0, 5) };
 }
 
 // --- Connection check ------------------------------------------------------------------------

@@ -1,4 +1,5 @@
 import { decodeEntities } from './text';
+import type { RecipeStep } from './types';
 import { parseYield } from './yield';
 
 export interface RecipeDraft {
@@ -6,6 +7,7 @@ export interface RecipeDraft {
   ingredients: string[];
   servings?: number;
   yieldText?: string;
+  steps?: RecipeStep[];
   sourceUrl: string;
 }
 
@@ -64,6 +66,30 @@ function clean(s: string): string {
   return decodeEntities(s).replace(/\s+/g, ' ').trim();
 }
 
+const MAX_STEPS = 300;
+
+function stepText(s: string): string {
+  return clean(s.replace(/<[^>]+>/g, ' ')).replace(/\s+([.,;:!?])/g, '$1').slice(0, 2000);
+}
+
+function flattenSteps(value: unknown, depth = 0): RecipeStep[] {
+  if (depth > 6) return [];
+  if (typeof value === 'string') {
+    return value.split(/\r?\n/).map(stepText).filter(Boolean).map((text) => ({ text, isHeader: false }));
+  }
+  if (Array.isArray(value)) return value.flatMap((v) => flattenSteps(v, depth + 1));
+  if (!isObject(value)) return [];
+  const types = Array.isArray(value['@type']) ? value['@type'] : [value['@type']];
+  if (types.some((t) => typeof t === 'string' && /HowToSection$/.test(t))) {
+    const name = typeof value.name === 'string' ? stepText(value.name).replace(/:$/, '') : '';
+    const inner = flattenSteps(value.itemListElement, depth + 1);
+    return name && inner.length > 0 ? [{ text: name, isHeader: true }, ...inner] : inner;
+  }
+  const raw = typeof value.text === 'string' ? value.text : typeof value.name === 'string' ? value.name : '';
+  const text = stepText(raw);
+  return text ? [{ text, isHeader: false }] : [];
+}
+
 /**
  * Finds a schema.org Recipe in the page's JSON-LD blocks. Handles arrays, @graph, mainEntity,
  * @type arrays, nested or single-string ingredient lists, and double-encoded entities.
@@ -85,9 +111,11 @@ export function extractRecipe(jsonLdBlocks: string[], pageUrl: string): RecipeDr
   const title = typeof recipe.name === 'string' && clean(recipe.name) ? clean(recipe.name) : 'Untitled recipe';
   const { servings, yieldText } = parseYield(recipe.recipeYield ?? recipe.yield);
 
+  const steps = flattenSteps(recipe.recipeInstructions).slice(0, MAX_STEPS);
   return {
     title,
     ingredients,
+    ...(steps.length > 0 ? { steps } : {}),
     ...(servings !== undefined ? { servings } : {}),
     ...(yieldText ? { yieldText: clean(yieldText) } : {}),
     sourceUrl: pageUrl,

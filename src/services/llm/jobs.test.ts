@@ -65,9 +65,37 @@ describe('swapsAndTips', () => {
       tips: ['Freeze leftover herbs in oil.', ' ', 't2', 't3', 't4', 't5', 't6'],
     });
     expect(await swapsAndTips(config, ['saffron', 'rice'], fetchImpl)).toEqual({
-      swaps: [{ item: 'Saffron', swap: 'turmeric' }],
+      swaps: [{ item: 'saffron', swap: 'turmeric' }],
       tips: ['Freeze leftover herbs in oil.', 't2', 't3', 't4', 't5'],
     });
+  });
+
+  it('keeps the good parts of a reply that breaks the limits', async () => {
+    const fetchImpl = reply({
+      swaps: [
+        { item: 'Saffron', swap: 'a pinch of turmeric for colour' },
+        { item: 'saffron', swap: 'x'.repeat(500) },
+        { nope: true },
+        { item: 'unknown thing', swap: 'skip me' },
+      ],
+      tips: [...Array.from({ length: 12 }, (_, i) => `tip ${i}`), 42],
+    });
+    const result = await swapsAndTips(config, ['saffron', 'onions'], fetchImpl);
+    expect(result.swaps[0]).toEqual({ item: 'saffron', swap: 'a pinch of turmeric for colour' });
+    expect(result.swaps[1]?.swap).toHaveLength(300);
+    expect(result.swaps).toHaveLength(2);
+    expect(result.tips).toEqual(['tip 0', 'tip 1', 'tip 2', 'tip 3', 'tip 4']);
+  });
+
+  it('accepts a reply with only tips', async () => {
+    expect(await swapsAndTips(config, ['onions'], reply({ tips: ['Freeze leftover onion'] }))).toEqual({ swaps: [], tips: ['Freeze leftover onion'] });
+  });
+
+  it('gives the model room to think before answering', async () => {
+    const fetchImpl = reply({ swaps: [], tips: [] });
+    await swapsAndTips(config, ['onions'], fetchImpl);
+    const body = JSON.parse(String((fetchImpl.mock.calls[0] as unknown as [string, RequestInit])[1].body));
+    expect(body.max_tokens).toBe(8000);
   });
 
   it('accepts missing arrays', async () => {

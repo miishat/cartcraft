@@ -1,5 +1,6 @@
-import { BookOpen, ChefHat, ListChecks, Settings } from 'lucide-react';
+import { BookOpen, ListChecks, Settings } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router';
+import { AppLogo } from './components/AppLogo';
 import { IosInstallBanner } from './components/IosInstallBanner';
 
 const TABS = [
@@ -8,14 +9,14 @@ const TABS = [
   { to: '/settings', label: 'Settings', icon: Settings, end: false },
 ] as const;
 
-/** Top bar on desktop, bottom tab bar on mobile. */
+/** Logo and tabs across the top on desktop; on phones each screen has its own header and the tabs sit at the bottom. */
 export function Layout() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800">
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
+      <header className="sticky top-0 z-30 hidden border-b border-slate-200 bg-white/90 backdrop-blur md:block">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
           <NavLink to="/" className="flex items-center gap-2 font-semibold text-slate-900">
-            <ChefHat size={20} /> CartCraft
+            <AppLogo /> CartCraft
           </NavLink>
           <nav aria-label="Main" className="hidden gap-1 md:flex">
             {TABS.map(({ to, label, end }) => (
@@ -32,7 +33,7 @@ export function Layout() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-6 pb-28 md:pb-10">
+      <main className="mx-auto max-w-5xl px-4 pb-28 pt-[max(1.25rem,env(safe-area-inset-top))] md:py-6 md:pb-10">
         <IosInstallBanner />
         <Outlet />
       </main>

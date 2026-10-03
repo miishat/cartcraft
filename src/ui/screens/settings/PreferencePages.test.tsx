@@ -17,12 +17,26 @@ describe('Appearance page', () => {
   it('switches the theme and remembers it on this device', async () => {
     const { user } = renderRoutes(routes, '/settings/appearance');
     expect(screen.getByRole('heading', { level: 1, name: 'Appearance' })).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: 'Match my device' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'System' })).toBeChecked();
+    expect(screen.queryByRole('radio', { name: 'Match my device' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('radio', { name: 'Dark' }));
     expect(document.documentElement.dataset.theme).toBe('dark');
     expect(localStorage.getItem('cartcraft-theme')).toBe('dark');
-    await user.click(screen.getByRole('radio', { name: 'Match my device' }));
+    await user.click(screen.getByRole('radio', { name: 'System' }));
     expect(localStorage.getItem('cartcraft-theme')).toBeNull();
+    delete document.documentElement.dataset.theme;
+  });
+
+  it('picks a colour palette and remembers it on this device', async () => {
+    const { user } = renderRoutes(routes, '/settings/appearance');
+    expect(screen.getByRole('radio', { name: 'Basil' })).toBeChecked();
+    await user.click(screen.getByRole('radio', { name: 'Plum' }));
+    expect(document.documentElement.dataset.palette).toBe('plum');
+    expect(localStorage.getItem('cartcraft-palette')).toBe('plum');
+    expect(screen.getByRole('radio', { name: 'Plum' })).toBeChecked();
+    await user.click(screen.getByRole('radio', { name: 'Basil' }));
+    expect(localStorage.getItem('cartcraft-palette')).toBeNull();
+    delete document.documentElement.dataset.palette;
     delete document.documentElement.dataset.theme;
   });
 });

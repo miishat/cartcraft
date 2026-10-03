@@ -1,4 +1,4 @@
-import type { IngredientLine, ListItem, UnitSystem } from '../domain';
+import type { IngredientLine, RecipeStep, ListItem, UnitSystem } from '../domain';
 
 export interface Recipe {
   id: string;
@@ -8,6 +8,8 @@ export interface Recipe {
   baseServings: number;
   yieldText?: string;
   ingredients: IngredientLine[];
+  /** Method from the source page. Missing: never fetched. Empty: the page has none. */
+  steps?: RecipeStep[];
   createdAt: number;
   updatedAt: number;
 }

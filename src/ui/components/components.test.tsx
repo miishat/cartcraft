@@ -2,11 +2,13 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
+import { MemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import type { IngredientLine } from '../../domain';
 import { draftLinesFromText } from '../../app/recipes';
 import { sequentialIds } from '../../test/db';
 import { ReviewTable } from './ReviewTable';
+import { ScreenHeader } from './ScreenHeader';
 import { ServingsStepper } from './ServingsStepper';
 
 describe('ServingsStepper', () => {
@@ -60,5 +62,18 @@ describe('ReviewTable', () => {
     expect(screen.getAllByTestId('parsed')).toHaveLength(1);
     await user.click(screen.getByRole('button', { name: /add line/i }));
     expect(screen.getAllByTestId('parsed')).toHaveLength(2);
+  });
+});
+
+describe('ScreenHeader', () => {
+  it('renders a way back, the title and the actions', () => {
+    render(
+      <MemoryRouter>
+        <ScreenHeader title="Soup" back={{ to: '/lists', label: 'Lists' }} actions={<button type="button">Go</button>} />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('link', { name: 'Back to Lists' })).toHaveAttribute('href', '/lists');
+    expect(screen.getByRole('heading', { level: 1, name: 'Soup' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Go' })).toBeInTheDocument();
   });
 });

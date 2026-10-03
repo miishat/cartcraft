@@ -45,12 +45,12 @@ describe('buildListItems', () => {
   });
 
   it('never guesses between oz and fl oz', () => {
-    expect(shown([recipe('A', ['8 oz milk']), recipe('B', ['1 cup milk'])])).toEqual({ milk: '8 oz + 1 cup' });
+    expect(shown([recipe('A', ['8 oz milk']), recipe('B', ['1 cup milk'])])).toEqual({ milk: '1/2 lb + 1 cup' });
   });
 
   it('sums weights and converts per unit system', () => {
     const selections = [recipe('A', ['8 oz cream cheese']), recipe('B', ['4 oz cream cheese'])];
-    expect(shown(selections)).toEqual({ 'cream cheese': '12 oz' });
+    expect(shown(selections)).toEqual({ 'cream cheese': '3/4 lb' });
     expect(shown(selections, 'metric')).toEqual({ 'cream cheese': '340 g' });
     expect(shown([recipe('A', ['500 g rice']), recipe('B', ['750 g rice'])], 'metric')).toEqual({ rice: '1.25 kg' });
   });

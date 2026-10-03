@@ -15,6 +15,7 @@ import { AisleBadge } from '../components/AisleBadge';
 import { ErrorNote } from '../components/ErrorNote';
 import { PromptDialog } from '../components/Dialog';
 import { ProgressBar } from '../components/ProgressBar';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { ListItemRow } from '../components/ListItemRow';
 import { Menu, MenuCheckbox, MenuItem } from '../components/Menu';
 import { useDb } from '../db';
@@ -145,12 +146,11 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
   return (
     <div className="mx-auto max-w-2xl space-y-4 pb-40">
       <div className="space-y-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="text-[28px] font-bold leading-tight tracking-tight text-slate-900">{list.name}</h1>
-            <p className="text-sm text-slate-500">From {list.sources.map((s) => `${s.title} (${s.targetServings})`).join(', ')}</p>
-          </div>
-          <div className="shrink-0">
+        <ScreenHeader
+          title={list.name}
+          back={{ to: '/lists', label: 'Lists' }}
+          subtitle={`From ${list.sources.map((s) => `${s.title} (${s.targetServings})`).join(', ')}`}
+          actions={
             <Menu label="List options">
               <MenuItem icon="✏️" onSelect={() => setRenaming(true)}>Rename list</MenuItem>
               <MenuItem icon="📋" onSelect={() => void copy.run(listAsText(list.name, list.items, aisles, settings.unitSystem))}>
@@ -166,8 +166,8 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
                 </MenuCheckbox>
               )}
             </Menu>
-          </div>
-        </div>
+          }
+        />
         <ProgressBar done={list.items.filter((i) => i.checked).length} total={list.items.length} />
       </div>
       {copied && <p role="status" className="text-sm text-emerald-700">Copied to clipboard</p>}
@@ -202,7 +202,7 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
       {aiNote && <p role="status" className="text-sm text-slate-700">{aiNote}</p>}
 
       {view.aisles.length > 1 && (
-        <div role="group" aria-label="Filter by aisle" className="-mx-4 flex gap-2 overflow-x-auto px-4 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div role="group" aria-label="Filter by aisle" className="-mx-4 flex gap-2 overflow-x-auto px-4 py-1">
           <button type="button" aria-pressed={!filtered} aria-label="Show all aisles" onClick={() => setAisleFilter(null)} className={pill(!filtered)}>
             All <span className="tabular-nums">{leftCount}</span>
           </button>
@@ -275,20 +275,19 @@ export function ListScreen({ makeId = newId, now = Date.now, undoMs = 5000, copi
 
       <form
         onSubmit={onAdd}
-        className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-20 px-4 pb-3 md:bottom-0 md:pb-6"
+        className="pointer-events-none fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-20 bg-linear-to-t from-slate-50 from-60% to-transparent px-4 pb-3 pt-6 md:bottom-0 md:pb-6"
       >
-        <div className="mx-auto flex max-w-2xl items-center gap-2 rounded-2xl bg-white p-2 pl-4 shadow-lg ring-1 ring-slate-200 focus-within:ring-2 focus-within:ring-emerald-600">
-          <Plus size={18} className="shrink-0 text-slate-400" aria-hidden="true" />
+        <div className="pointer-events-auto mx-auto flex max-w-2xl items-center gap-2 rounded-2xl bg-white p-1.5 pr-3 shadow-lg ring-1 ring-slate-300 focus-within:ring-2 focus-within:ring-emerald-600">
+          <button type="submit" aria-label="Add item" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-700 text-white focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2">
+            <Plus size={20} aria-hidden="true" />
+          </button>
           <input
-            className="min-w-0 flex-1 bg-transparent py-1.5 outline-none"
+            className="min-w-0 flex-1 bg-transparent py-2 outline-none"
             placeholder="Add an item, e.g. paper towels"
             aria-label="Add an item"
             value={adhoc}
             onChange={(e) => setAdhoc(e.target.value)}
           />
-          <button type="submit" className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white" aria-label="Add item">
-            Add
-          </button>
         </div>
       </form>
       {renaming && (

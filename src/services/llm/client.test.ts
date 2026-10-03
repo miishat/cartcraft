@@ -66,7 +66,9 @@ describe('chatJson', () => {
     [402, 'billing'],
     [429, 'rate_limited'],
     [500, 'server'],
-    [400, 'bad_response'],
+    [400, 'rejected'],
+    [404, 'rejected'],
+    [422, 'rejected'],
   ])('maps HTTP %d to %s', async (status, kind) => {
     const fetchImpl = vi.fn(async () => new Response('{}', { status }));
     expect(await kindOf(chatJson(deepseek, request, fetchImpl))).toBe(kind);
@@ -104,5 +106,28 @@ describe('chatJson', () => {
     const failing = chatJson(deepseek, request, vi.fn(async () => new Response('{}', { status: 401 })));
     await expect(failing).rejects.toBeInstanceOf(LlmError);
     await expect(failing).rejects.toSatisfy((err: Error) => !err.message.includes('sk-test'));
+  });
+});
+
+function completion(content: unknown, finishReason = 'stop') {
+  return vi.fn(async () => new Response(JSON.stringify({ choices: [{ message: { content }, finish_reason: finishReason }] })));
+}
+
+describe('chatJson replies', () => {
+  it('reads a JSON object wrapped in prose', async () => {
+    const fetchImpl = completion('Here you go:\n{"ok": true}\nEnjoy!');
+    expect(await chatJson(deepseek, request, fetchImpl)).toEqual({ ok: true });
+  });
+
+  it('reports truncated when the reply is empty because the budget ran out', async () => {
+    expect(await kindOf(chatJson(deepseek, request, completion('', 'length')))).toBe('truncated');
+  });
+
+  it('reports truncated when the JSON is cut off', async () => {
+    expect(await kindOf(chatJson(deepseek, request, completion('{"swaps": [{"item": "sa', 'length')))).toBe('truncated');
+  });
+
+  it('still reports bad_response for an empty reply that finished normally', async () => {
+    expect(await kindOf(chatJson(deepseek, request, completion('')))).toBe('bad_response');
   });
 });

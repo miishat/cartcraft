@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable, type Transaction } from 'dexie';
-import { DEFAULT_AISLES } from '../domain';
+import { DEFAULT_AISLES, parseIngredientLine } from '../domain';
 import type {
   Aisle, AisleOverride, PantryStaple, Recipe, Secrets, Settings, ShoppingList, Snapshot,
 } from './types';
@@ -14,6 +14,17 @@ export const DEFAULT_SETTINGS: Settings = {
 
 export const DEFAULT_PANTRY = ['salt', 'black pepper', 'water', 'olive oil', 'vegetable oil'];
 
+const STORES = {
+  recipes: 'id, title, updatedAt',
+  lists: 'id, createdAt',
+  pantryStaples: 'itemKey',
+  aisles: 'id, order',
+  aisleOverrides: 'itemKey',
+  settings: 'id',
+  secrets: 'id',
+  snapshots: 'id',
+};
+
 export class CartCraftDb extends Dexie {
   recipes!: EntityTable<Recipe, 'id'>;
   lists!: EntityTable<ShoppingList, 'id'>;
@@ -26,16 +37,16 @@ export class CartCraftDb extends Dexie {
 
   constructor(name = 'cartcraft') {
     super(name);
-    this.version(1).stores({
-      recipes: 'id, title, updatedAt',
-      lists: 'id, createdAt',
-      pantryStaples: 'itemKey',
-      aisles: 'id, order',
-      aisleOverrides: 'itemKey',
-      settings: 'id',
-      secrets: 'id',
-      snapshots: 'id',
-    });
+    this.version(1).stores(STORES);
+    // Version 2: re-parse saved ingredient lines with the bracket-aware parser. Lists are snapshots and stay as built.
+    this.version(2).stores(STORES).upgrade((tx) =>
+      tx.table('recipes').toCollection().modify((recipe: Recipe) => {
+        recipe.ingredients = recipe.ingredients.map((line) => {
+          const fresh = parseIngredientLine(line.raw, line.id);
+          return line.needsReview && !line.isHeader ? { ...fresh, needsReview: true } : fresh;
+        });
+      }),
+    );
     this.on('populate', (tx) => seedDefaults(tx));
   }
 }
