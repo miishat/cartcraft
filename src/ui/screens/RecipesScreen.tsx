@@ -129,10 +129,10 @@ export function RecipesScreen({ makeId = newId, now = Date.now }: Props) {
             type="button"
             onClick={() => setNaming(true)}
             aria-label={`Build List (${selected.size})`}
-            className="mx-auto flex w-full max-w-2xl items-center gap-3 rounded-2xl bg-emerald-700 px-4 py-3.5 font-semibold text-white shadow-lg disabled:opacity-50"
+            className="mx-auto flex w-full max-w-2xl items-center gap-3 rounded-2xl bg-emerald-100 px-4 py-3.5 font-semibold text-emerald-900 shadow-lg ring-1 ring-emerald-200 disabled:opacity-50"
           >
             <AppLogo className="h-6 w-6" /> Build List
-            <span className="ml-auto text-sm font-normal text-emerald-100">
+            <span className="ml-auto text-sm font-normal text-emerald-800">
               {plural(selected.size, 'recipe')} · {plural(ingredientCount, 'ingredient')}
             </span>
           </button>

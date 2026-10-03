@@ -18,7 +18,7 @@ function cloudflareHeaders(): Plugin {
 }
 
 /** Bump when public/icon.svg changes, here and in index.html, so installed apps refetch the icon. */
-const ICON_VERSION = 2;
+const ICON_VERSION = 3;
 
 export default defineConfig({
   define: {
