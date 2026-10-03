@@ -25,15 +25,15 @@ describe('RecipesScreen', () => {
     expect(link.querySelector('[data-recipe-cover]')).toHaveTextContent('🌮');
   });
 
-  it('summarises the selection on the Build list bar', async () => {
+  it('summarises the selection on the Build List bar', async () => {
     const db = createTestDb();
     await addRecipe(db, 'Tacos', '1 cup milk\n2 onions');
     await addRecipe(db, 'Soup', '2 carrots');
     const { user } = renderRoutes(routes, '/', db);
     await user.click(await screen.findByRole('button', { name: 'Select Tacos' }));
-    expect(screen.getByRole('button', { name: 'Build list (1)' })).toHaveTextContent('1 recipe · 2 ingredients');
+    expect(screen.getByRole('button', { name: 'Build List (1)' })).toHaveTextContent('1 recipe · 2 ingredients');
     await user.click(screen.getByRole('button', { name: 'Select Soup' }));
-    expect(screen.getByRole('button', { name: 'Build list (2)' })).toHaveTextContent('2 recipes · 3 ingredients');
+    expect(screen.getByRole('button', { name: 'Build List (2)' })).toHaveTextContent('2 recipes · 3 ingredients');
   });
 
   it('counts only ingredient lines on each row', async () => {
@@ -68,7 +68,7 @@ describe('RecipesScreen', () => {
     const { user } = renderRoutes(routes, '/', db);
     await user.click(await screen.findByRole('button', { name: 'Select Tacos' }));
     await db.recipes.delete(id);
-    await user.click(screen.getByRole('button', { name: 'Build list (1)' }));
+    await user.click(screen.getByRole('button', { name: 'Build List (1)' }));
     await user.click(screen.getByRole('button', { name: 'Create list' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not build the list. Try again.');
     expect(screen.getByTestId('location').textContent).toBe('/');
@@ -85,7 +85,7 @@ describe('RecipesScreen', () => {
     await user.click(screen.getByRole('button', { name: 'More servings for Tacos' }));
     await user.click(screen.getByRole('button', { name: 'More servings for Tacos' }));
     await user.click(screen.getByRole('button', { name: 'Select Soup' }));
-    await user.click(screen.getByRole('button', { name: 'Build list (2)' }));
+    await user.click(screen.getByRole('button', { name: 'Build List (2)' }));
     await user.click(screen.getByRole('button', { name: 'Create list' }));
 
     await waitFor(() => expect(screen.getByTestId('location').textContent).toMatch(/^\/lists\//));
@@ -101,7 +101,7 @@ describe('RecipesScreen', () => {
     await addRecipe(db, 'Bread', '2 cups flour');
     const { user } = renderRoutes(routes, '/', db);
     await user.click(await screen.findByRole('button', { name: 'Select Bread' }));
-    await user.click(screen.getByRole('button', { name: 'Build list (1)' }));
+    await user.click(screen.getByRole('button', { name: 'Build List (1)' }));
     await user.click(screen.getByRole('button', { name: 'Bread' }));
     await user.click(screen.getByRole('button', { name: 'Create list' }));
     await waitFor(() => expect(screen.getByTestId('location').textContent).toMatch(/^\/lists\//));

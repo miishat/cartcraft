@@ -11,7 +11,8 @@ test('works offline after the first visit: recipes, building a list and checking
   await expect(page.getByText('Tomato soup')).toBeVisible();
 
   await page.getByRole('button', { name: 'Select Tomato soup' }).click();
-  await page.getByRole('button', { name: /Build list \(1\)/ }).click();
+  await page.getByRole('button', { name: /Build List \(1\)/ }).click();
+  await page.getByRole('button', { name: 'Create list' }).click();
   await expect(page).toHaveURL(/\/lists\//);
   await page.getByRole('button', { name: 'Onions: 2' }).click();
   await expect(page.getByText('In cart (1)')).toBeVisible();

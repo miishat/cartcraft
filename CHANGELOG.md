@@ -5,8 +5,16 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 ## [Unreleased]
 
 ### Changed
+- Once swaps & tips are added to a list, the "Add swaps & tips" button goes away and the Swaps & tips section gets a Regenerate button instead.
+- After "Clean up with AI" runs in the recipe editor, the button hides until you change the ingredient text.
+- The Build list bar is now "Build List" in the accent colour, with the CartCraft logo.
+- Saved lists on the Lists tab are cards showing their recipes' emoji, recipe names, an items count (green when everything is in the cart) and the date.
+- Settings names are in title case with "&": AI Helper, Default Servings, Pantry Staples, Backup & Restore. The footer reads "CartCraft 0.4.0" instead of "CartCraft version 0.4.0".
 - The bottom tabs on phones are larger emoji with no text (🍳 Recipes, 🛒 Lists, ⚙️ Settings) to match the aisle badges. Inactive tabs are greyed out and the active one has a green dot under it.
 - New logo: a shopping cart whose basket is a recipe card, white on a green tile. It replaces the chef hat in the app, the browser tab and the installed app icon.
+
+### Fixed
+- Installed apps (such as on the Windows taskbar) now pick up the new logo instead of keeping the old cached icon. You may need to unpin and re-pin the app once.
 
 ## [0.4.0] - 2026-10-03
 

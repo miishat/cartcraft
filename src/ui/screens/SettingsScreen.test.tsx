@@ -12,7 +12,7 @@ describe('Settings home', () => {
   it('shows the title and the app version', async () => {
     renderRoutes(routes, '/settings');
     expect(screen.getByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument();
-    expect(await screen.findByText('CartCraft version test')).toBeInTheDocument();
+    expect(await screen.findByText('CartCraft test')).toBeInTheDocument();
   });
 
   it('links every row to its page', async () => {
@@ -20,11 +20,11 @@ describe('Settings home', () => {
     const pages: [RegExp, string][] = [
       [/^Appearance/, '/settings/appearance'],
       [/^Units/, '/settings/units'],
-      [/^Default servings/, '/settings/servings'],
+      [/^Default Servings/, '/settings/servings'],
       [/^Aisles/, '/settings/aisles'],
-      [/^Pantry staples/, '/settings/pantry'],
-      [/^AI helper/, '/settings/ai'],
-      [/^Backup and restore/, '/settings/backup'],
+      [/^Pantry Staples/, '/settings/pantry'],
+      [/^AI Helper/, '/settings/ai'],
+      [/^Backup & Restore/, '/settings/backup'],
       [/^Storage/, '/settings/storage'],
     ];
     for (const [name, href] of pages) expect(await screen.findByRole('link', { name })).toHaveAttribute('href', href);
@@ -36,16 +36,16 @@ describe('Settings home', () => {
     renderRoutes(routes, '/settings', db);
     expect(await screen.findByRole('link', { name: /^Appearance/ })).toHaveTextContent('Basil, System');
     expect(screen.getByRole('link', { name: /^Units/ })).toHaveTextContent('US');
-    expect(await screen.findByRole('link', { name: /^Default servings/ })).toHaveTextContent('4');
+    expect(await screen.findByRole('link', { name: /^Default Servings/ })).toHaveTextContent('4');
     expect(await screen.findByRole('link', { name: /^Aisles/ })).toHaveTextContent('11 aisles, your store order');
-    expect(await screen.findByRole('link', { name: /^Pantry staples/ })).toHaveTextContent('black pepper, olive oil, salt +2');
-    expect(await screen.findByRole('link', { name: /^AI helper/ })).toHaveTextContent('DeepSeek, key saved');
+    expect(await screen.findByRole('link', { name: /^Pantry Staples/ })).toHaveTextContent('black pepper, olive oil, salt +2');
+    expect(await screen.findByRole('link', { name: /^AI Helper/ })).toHaveTextContent('DeepSeek, key saved');
   });
 
   it('says AI is off without a key and groups the rows', async () => {
     renderRoutes(routes, '/settings');
-    await waitFor(() => expect(screen.getByRole('link', { name: /^AI helper/ })).toHaveTextContent('Off'));
+    await waitFor(() => expect(screen.getByRole('link', { name: /^AI Helper/ })).toHaveTextContent('Off'));
     const data = screen.getByRole('region', { name: 'Your data' });
-    expect(within(data).getByRole('link', { name: /^Backup and restore/ })).toBeInTheDocument();
+    expect(within(data).getByRole('link', { name: /^Backup & Restore/ })).toBeInTheDocument();
   });
 });

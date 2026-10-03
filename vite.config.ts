@@ -17,6 +17,9 @@ function cloudflareHeaders(): Plugin {
   };
 }
 
+/** Bump when public/icon.svg changes, here and in index.html, so installed apps refetch the icon. */
+const ICON_VERSION = 2;
+
 export default defineConfig({
   define: {
     // CARTCRAFT_VERSION lets the e2e update test build a second, different version.
@@ -44,11 +47,12 @@ export default defineConfig({
         display: 'standalone',
         start_url: '/',
         scope: '/',
+        // Installed apps (Windows taskbar, home screens) keep a cached icon until its URL changes.
         icons: [
-          { src: 'pwa-64x64.png', sizes: '64x64', type: 'image/png' },
-          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'maskable-icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: `pwa-64x64.png?v=${ICON_VERSION}`, sizes: '64x64', type: 'image/png' },
+          { src: `pwa-192x192.png?v=${ICON_VERSION}`, sizes: '192x192', type: 'image/png' },
+          { src: `pwa-512x512.png?v=${ICON_VERSION}`, sizes: '512x512', type: 'image/png' },
+          { src: `maskable-icon-512x512.png?v=${ICON_VERSION}`, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {

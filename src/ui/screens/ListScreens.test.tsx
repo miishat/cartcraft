@@ -35,7 +35,7 @@ describe('ListsScreen', () => {
     const { db } = await seededList();
     const { user } = renderRoutes(routes, '/lists', db);
     expect(await screen.findByText(SEED_NAME)).toBeInTheDocument();
-    expect(screen.getByText('0 of 3 in cart')).toBeInTheDocument();
+    expect(screen.getByText('0/3')).toBeInTheDocument();
     expect(screen.getByRole('progressbar', { name: 'Shopping progress' })).toHaveAttribute('aria-valuenow', '0');
     await user.click(screen.getByRole('button', { name: `Delete ${SEED_NAME}` }));
     await user.click(await screen.findByRole('button', { name: 'Delete list' }));
