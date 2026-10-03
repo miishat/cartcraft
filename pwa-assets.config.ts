@@ -1,8 +1,8 @@
 import { defineConfig, minimal2023Preset as preset } from '@vite-pwa/assets-generator/config';
 
 // public/icon.svg has rounded corners on a transparent canvas. The plain icons keep them;
-// maskable and Apple icons are filled white because the OS applies its own mask.
-const square = { padding: 0, resizeOptions: { background: '#ffffff' } };
+// maskable and Apple icons are filled green (the tile colour) because the OS applies its own mask.
+const square = { padding: 0, resizeOptions: { background: '#047857' } };
 
 export default defineConfig({
   headLinkOptions: { preset: '2023' },

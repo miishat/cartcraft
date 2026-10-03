@@ -1,12 +1,11 @@
-import { BookOpen, ListChecks, Settings } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router';
 import { AppLogo } from './components/AppLogo';
 import { IosInstallBanner } from './components/IosInstallBanner';
 
 const TABS = [
-  { to: '/', label: 'Recipes', icon: BookOpen, end: true },
-  { to: '/lists', label: 'Lists', icon: ListChecks, end: false },
-  { to: '/settings', label: 'Settings', icon: Settings, end: false },
+  { to: '/', label: 'Recipes', emoji: '🍳', end: true },
+  { to: '/lists', label: 'Lists', emoji: '🛒', end: false },
+  { to: '/settings', label: 'Settings', emoji: '⚙️', end: false },
 ] as const;
 
 /** Logo and tabs across the top on desktop; on phones each screen has its own header and the tabs sit at the bottom. */
@@ -39,15 +38,21 @@ export function Layout() {
       </main>
 
       <nav aria-label="Tabs" className="fixed inset-x-0 bottom-0 z-30 flex justify-around border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] md:hidden">
-        {TABS.map(({ to, label, icon: Icon, end }) => (
+        {TABS.map(({ to, label, emoji, end }) => (
           <NavLink
             key={to}
             to={to}
             end={end}
-            className={({ isActive }) => `flex min-h-14 flex-1 flex-col items-center justify-center text-xs ${isActive ? 'text-emerald-800' : 'text-slate-500'}`}
+            className={({ isActive }) => `flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-xs ${isActive ? 'font-medium text-emerald-800' : 'text-slate-500'}`}
           >
-            <Icon size={20} />
-            {label}
+            {({ isActive }) => (
+              <>
+                <span aria-hidden="true" className={`flex rounded-full px-4 py-0.5 text-xl leading-none ${isActive ? 'bg-emerald-100' : ''}`}>
+                  {emoji}
+                </span>
+                {label}
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
