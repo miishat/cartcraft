@@ -40,6 +40,20 @@
   --color-tint-gray-fg: #6b6158;
 }
 
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; }
+}
+
 /*
  * Dark theme: each ramp is mirrored (50 <-> 950, 100 <-> 900 ...), so a class like
  * "bg-slate-900 text-white" keeps its contrast without any dark: variants in the markup.
