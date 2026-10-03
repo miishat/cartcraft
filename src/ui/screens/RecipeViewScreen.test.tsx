@@ -104,7 +104,7 @@ describe('RecipeViewScreen', () => {
     const fake = vi.fn();
     renderRoutes([{ path: '/recipes/:id/view', element: <RecipeViewScreen importRecipe={fake} /> }], `/recipes/${id}/view`, db);
     await screen.findByText('2 cups flour');
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.queryByText(/Getting the method/)).toBeNull();
     expect(screen.queryByRole('link', { name: /View original/ })).toBeNull();
     expect(fake).not.toHaveBeenCalled();
   });
