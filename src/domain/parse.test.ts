@@ -111,11 +111,11 @@ describe('parseIngredientLine: units', () => {
     expect(line.item).toBe('cheddar');
   });
 
-  it('1 cup (240 ml) milk keeps the conversion as a note', () => {
+  it('1 cup (240 ml) milk drops the repeated amount', () => {
     const line = parse('1 cup (240 ml) milk');
     expect(line.unit).toBe('cup');
     expect(line.item).toBe('milk');
-    expect(line.notes).toBe('240 ml');
+    expect(line.notes).toBe('');
   });
 
   it.each([
@@ -275,5 +275,30 @@ describe('parseIngredientLine: gaps closed in Plan 3', () => {
 
   it('flags a zero amount', () => {
     expect(parse('0 cups sugar').needsReview).toBe(true);
+  });
+});
+
+describe('bracket groups (RecipeTin Eats biryani)', () => {
+  it.each([
+    ['750g (1.5 lb)  chicken thighs (, skin on, bone in, halved along bone (Note 1))', { quantity: { min: 750 }, unit: 'g', item: 'chicken thighs', notes: 'skin on, bone in, halved along bone', alternatives: [] }],
+    ['2/3 cup (150 ml)  yoghurt (, plain)', { item: 'yoghurt', notes: 'plain', alternatives: [] }],
+    ['2 tbsp vegetable oil ((or other plain oil))', { item: 'vegetable oil', notes: '', alternatives: ['other plain oil'] }],
+    ['2 tbsp paprika (, sweet / ordinary (not smoked))', { item: 'paprika', notes: 'sweet / ordinary (not smoked)', alternatives: [] }],
+    ['2 1/4 cups (450g)  uncooked basmati rice ((Note 3))', { quantity: { min: 2.25 }, unit: 'cup', item: 'uncooked basmati rice', notes: '', alternatives: [] }],
+    ['2  medium onions (yellow, brown) (, halved and finely sliced)', { item: 'onions', size: 'medium', notes: 'yellow, brown, halved and finely sliced', alternatives: [] }],
+    ['1 tsp saffron threads ((loosely packed) (Note 5))', { item: 'saffron threads', notes: 'loosely packed', alternatives: [] }],
+    ['1/4 cup (60g)  ghee or unsalted butter (, melted (Note 6))', { item: 'ghee', notes: 'melted', alternatives: ['unsalted butter'] }],
+    ['Crispy onions ((above))', { item: 'Crispy onions', notes: 'above', alternatives: [] }],
+    ['Yoghurt ((Note 7))', { item: 'Yoghurt', notes: '', alternatives: [] }],
+  ])('%s', (raw, expected) => {
+    expect(parse(raw)).toMatchObject(expected);
+  });
+
+  it('keeps a bracket note that is not an amount', () => {
+    expect(parse('1 cup milk (about 240 ml)').notes).toBe('about 240 ml');
+  });
+
+  it('never leaves a stray bracket in the item', () => {
+    expect(parse('2 eggs )').item).toBe('eggs');
   });
 });

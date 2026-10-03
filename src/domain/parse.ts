@@ -24,6 +24,68 @@ const PACKAGE = new RegExp(
 const OUNCES_AFTER_POUNDS = new RegExp(String.raw`^(${NUM})\s*(?:oz|ounces?)\.?\s+(.+)$`, 'i');
 const SIZE = /^(small|medium|large)\b,?\s*/i;
 
+const NOTE_REF = /\(?\s*\bnotes?\s+\d+[a-z]?\b\s*\)?/gi;
+const ALT_MEASURE = new RegExp(String.raw`^(?:${NUM})\s*([a-z]+\.?)$`, 'i');
+
+/** Top-level "(...)" groups with their nesting kept, and the text outside them. Unclosed groups run to the end. */
+function splitBracketGroups(text: string): { outside: string; groups: string[] } {
+  let outside = '';
+  let current = '';
+  let depth = 0;
+  const groups: string[] = [];
+  for (const ch of text) {
+    if (ch === '(') {
+      if (depth > 0) current += ch;
+      depth += 1;
+    } else if (ch === ')' && depth > 0) {
+      depth -= 1;
+      if (depth === 0) {
+        groups.push(current);
+        current = '';
+        outside += ' ';
+      } else {
+        current += ch;
+      }
+    } else if (depth > 0) {
+      current += ch;
+    } else {
+      outside += ch;
+    }
+  }
+  if (current) groups.push(current);
+  return { outside: outside.replace(/[()]/g, ' '), groups };
+}
+
+/** True when the brackets at the ends of `s` belong to one group, as in "(a (b) c)" but not "(a) (b)". */
+function wrappedWhole(s: string): boolean {
+  if (!s.startsWith('(') || !s.endsWith(')')) return false;
+  let depth = 0;
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === '(') depth += 1;
+    else if (s[i] === ')') depth -= 1;
+    if (depth === 0 && i < s.length - 1) return false;
+  }
+  return true;
+}
+
+/** Cleans one bracket group: no note references, no extra wrapping, no edge commas. */
+function cleanGroup(group: string): string {
+  let s = group.replace(NOTE_REF, ' ').replace(/\(\s*\)/g, ' ').replace(/\s+/g, ' ').trim();
+  for (;;) {
+    s = s.replace(/^[,;\s]+|[,;\s]+$/g, '');
+    if (!wrappedWhole(s)) break;
+    s = s.slice(1, -1);
+  }
+  return s;
+}
+
+/** "1.5 lb", "150 ml", "450g": the same amount in other units. */
+function isAlternateMeasure(group: string): boolean {
+  const unit = ALT_MEASURE.exec(group)?.[1];
+  const def = unit ? lookupUnit(unit) : undefined;
+  return def?.dimension === 'mass' || def?.dimension === 'volume';
+}
+
 /**
  * Parses one ingredient line. Never throws and never drops text: anything not understood
  * stays in `notes` and sets `needsReview`.
@@ -163,16 +225,15 @@ export function parseIngredientLine(raw: string, id: string): IngredientLine {
     text = text.slice(sizeMatch[0].length);
   }
 
-  text = text
-    .replace(/\(([^)]*)\)/g, (_m, inner: string) => {
-      const content = inner.trim();
-      const alternative = /^or\s+(.+)$/i.exec(content);
-      if (alternative?.[1] !== undefined) alternatives.push(alternative[1].trim());
-      else if (content) notes.push(content);
-      return ' ';
-    })
-    .replace(/\s+/g, ' ')
-    .trim();
+  const { outside, groups } = splitBracketGroups(text);
+  for (const group of groups) {
+    const content = cleanGroup(group);
+    if (!content || isAlternateMeasure(content)) continue;
+    const alternative = /^or\s+(.+)$/i.exec(content);
+    if (alternative?.[1] !== undefined) alternatives.push(alternative[1].trim());
+    else notes.push(content);
+  }
+  text = outside.replace(/\s+/g, ' ').trim();
 
   const comma = text.indexOf(',');
   let item = (comma >= 0 ? text.slice(0, comma) : text).trim();
@@ -209,7 +270,7 @@ export function parseIngredientLine(raw: string, id: string): IngredientLine {
     itemKey: itemKey(item),
     ...(size ? { size } : {}),
     ...(packageSize ? { packageSize } : {}),
-    notes: notes.join(', '),
+    notes: notes.map((n) => n.trim()).filter(Boolean).join(', '),
     alternatives,
     scalable,
     approximate,

@@ -15,6 +15,7 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 
 ### Fixed
 - Add swaps & tips works with replies that have extra text, too many suggestions or a long thinking step, and AI errors now say what went wrong (a rejected model name, or a reply cut off).
+- Imported ingredient lines with brackets inside brackets (common on RecipeTin Eats) no longer show stray ")" or "(" in the name or notes, "Note 1" references are dropped, and a repeated amount in other units such as "(1.5 lb)" is no longer shown as a note.
 
 ## [0.3.0] - 2026-10-02
 
