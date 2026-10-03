@@ -36,6 +36,15 @@ describe('saveRecipe', () => {
     expect(await db.recipes.get(id)).toMatchObject({ title: 'Pancakes', baseServings: 4, createdAt: 1000, updatedAt: 1000 });
   });
 
+  it('stores steps when given and none otherwise', async () => {
+    const db = createTestDb();
+    const steps = [{ text: 'Mix.', isHeader: false }];
+    const withSteps = await saveRecipe(db, { ...input, steps }, 1000, sequentialIds('a'));
+    const without = await saveRecipe(db, input, 1000, sequentialIds('b'));
+    expect((await db.recipes.get(withSteps))?.steps).toEqual(steps);
+    expect(await db.recipes.get(without)).not.toHaveProperty('steps');
+  });
+
   it('updates an existing recipe and keeps createdAt', async () => {
     const db = createTestDb();
     const id = await saveRecipe(db, input, 1000, sequentialIds('recipe'));

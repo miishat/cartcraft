@@ -39,6 +39,21 @@ describe('RecipeEditorScreen: import from link', () => {
     expect(recipe).toMatchObject({ title: 'Tacos', baseServings: 6, sourceUrl: URL, rawText: '1 lb ground beef\n8 tortillas' });
   });
 
+  it('keeps imported method steps when saving', async () => {
+    const steps = [{ text: 'Brown the beef.', isHeader: false }, { text: 'Serve', isHeader: true }];
+    const { user, db } = setup({
+      ok: true,
+      recipe: { title: 'Tacos', ingredients: ['1 lb ground beef'], servings: 4, steps, sourceUrl: URL },
+    });
+    await user.type(screen.getByLabelText('Ingredients'), URL);
+    await user.click(screen.getByRole('button', { name: 'Import from link' }));
+    await screen.findByText('Review (1 lines)');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(screen.getByTestId('location').textContent).toBe('/'));
+    const [recipe] = await db.recipes.toArray();
+    expect(recipe?.steps).toEqual(steps);
+  });
+
   it('asks the user to check servings when the page has none', async () => {
     const { user } = setup({
       ok: true,

@@ -1,4 +1,4 @@
-import { parseIngredientLine, type IngredientLine } from '../domain';
+import { parseIngredientLine, type IngredientLine, type RecipeStep } from '../domain';
 import { updateSettings, type CartCraftDb } from '../data/db';
 import type { Recipe } from '../data/types';
 import { UserFacingError } from './errors';
@@ -11,6 +11,7 @@ export interface RecipeInput {
   baseServings: number;
   yieldText?: string;
   ingredients: IngredientLine[];
+  steps?: RecipeStep[];
 }
 
 /** Splits pasted text into lines and parses each one for the review table. Blank lines are dropped. */
@@ -50,6 +51,7 @@ export async function saveRecipe(
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
     ...(input.sourceUrl ? { sourceUrl: input.sourceUrl } : {}),
+    ...(input.steps ? { steps: input.steps } : {}),
     ...(input.yieldText ? { yieldText: input.yieldText } : {}),
   };
   await db.recipes.put(recipe);

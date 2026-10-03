@@ -18,6 +18,7 @@ const RecipeSchema = z.object({
     ingredients: z.array(z.string().max(2000)).max(500),
     servings: z.number().finite().positive().optional(),
     yieldText: z.string().max(500).optional(),
+    steps: z.array(z.object({ text: z.string().max(2000), isHeader: z.boolean() })).max(300).optional(),
     sourceUrl: z.string().max(2048),
   }),
 });
@@ -57,13 +58,14 @@ export async function importRecipeFromUrl(
   const data = await postImport({ url: url.trim() }, fetchImpl, timeoutMs);
   const recipe = RecipeSchema.safeParse(data);
   if (recipe.success) {
-    const { title, ingredients, servings, yieldText, sourceUrl } = recipe.data.recipe;
+    const { title, ingredients, servings, yieldText, steps, sourceUrl } = recipe.data.recipe;
     return {
       ok: true,
       recipe: {
         title,
         ingredients,
         sourceUrl,
+        ...(steps !== undefined ? { steps } : {}),
         ...(servings !== undefined ? { servings } : {}),
         ...(yieldText !== undefined ? { yieldText } : {}),
       },

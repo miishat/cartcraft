@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { Link2, Sparkles, Trash2 } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import type { IngredientLine } from '../../domain';
+import type { IngredientLine, RecipeStep } from '../../domain';
 import { aiCleanUpText, hasUsableAiKey, type AiDraft } from '../../app/ai';
 import { newId } from '../../app/ids';
 import { deleteRecipe, draftLinesFromText, requestPersistence, saveRecipe } from '../../app/recipes';
@@ -54,6 +54,7 @@ export function RecipeEditorScreen({
   const [lines, setLines] = useState<IngredientLine[] | null>(null);
   const [sourceUrl, setSourceUrl] = useState<string | undefined>();
   const [yieldText, setYieldText] = useState<string | undefined>();
+  const [steps, setSteps] = useState<RecipeStep[] | undefined>();
   const [importNote, setImportNote] = useState<string | null>(null);
   /** A link whose page had no recipe data; AI can still read its text. */
   const [aiUrl, setAiUrl] = useState<string | null>(null);
@@ -68,6 +69,7 @@ export function RecipeEditorScreen({
         setLines(recipe.ingredients);
         setSourceUrl(recipe.sourceUrl);
         setYieldText(recipe.yieldText);
+        setSteps(recipe.steps);
       } else {
         setMissing(true);
       }
@@ -142,6 +144,7 @@ export function RecipeEditorScreen({
     setTitle((current) => current || recipe.title);
     setSourceUrl(recipe.sourceUrl);
     setYieldText(recipe.yieldText);
+    setSteps(recipe.steps);
     setServings(String(recipe.servings ?? settings.defaultServings));
     setServingsGuessed(recipe.servings === undefined);
     setRawText(text);
@@ -163,6 +166,7 @@ export function RecipeEditorScreen({
         ingredients: ingredients.filter((l) => l.raw.trim() !== ''),
         ...(sourceUrl ? { sourceUrl } : {}),
         ...(yieldText ? { yieldText } : {}),
+        ...(steps ? { steps } : {}),
       },
       now(),
       makeId,

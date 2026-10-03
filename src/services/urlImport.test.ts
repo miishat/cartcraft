@@ -23,6 +23,13 @@ describe('importRecipeFromUrl', () => {
     expect(fetchImpl).toHaveBeenCalledWith('/api/import', expect.objectContaining({ method: 'POST', body: JSON.stringify({ url: 'https://example.com/t' }) }));
   });
 
+  it('keeps method steps', async () => {
+    const steps = [{ text: 'Crispy onions', isHeader: true }, { text: 'Fry the onion.', isHeader: false }];
+    const fetchImpl = respond({ ok: true, mode: 'recipe', recipe: { title: 'Tacos', ingredients: ['1 onion'], steps, sourceUrl: 'https://example.com/t' } });
+    const result = await importRecipeFromUrl('https://example.com/t', fetchImpl);
+    expect(result).toEqual({ ok: true, recipe: { title: 'Tacos', ingredients: ['1 onion'], steps, sourceUrl: 'https://example.com/t' } });
+  });
+
   it('passes through known errors', async () => {
     expect(await importRecipeFromUrl('https://x.com', respond({ ok: false, error: 'blocked' }))).toEqual({ ok: false, error: 'blocked' });
     expect(await importRecipeFromUrl('https://x.com', respond({ ok: false, error: 'rate_limited' }, 429))).toEqual({ ok: false, error: 'rate_limited' });
