@@ -4,6 +4,10 @@ All notable changes to CartCraft are recorded here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Changed
+- The bottom tabs on phones use emoji (🍳 Recipes, 🛒 Lists, ⚙️ Settings) to match the aisle badges, with the active tab on a green pill.
+- New logo: a shopping cart whose basket is a recipe card, white on a green tile. It replaces the chef hat in the app, the browser tab and the installed app icon.
+
 ## [0.4.0] - 2026-10-03
 
 ### Added
