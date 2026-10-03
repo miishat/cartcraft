@@ -21,18 +21,18 @@ function lineText(line: IngredientLine, system: UnitSystem): string {
   return `${amount} ${line.item}${line.notes ? `, ${line.notes}` : ''}`;
 }
 
-/** Read-only recipe page (/recipes/:id/view) with a servings stepper that scales what is shown. */
 interface Props {
   importRecipe?: (url: string) => Promise<UrlImportResult>;
 }
 
+/** Read-only recipe page (/recipes/:id/view) with a servings stepper that scales what is shown. */
 export function RecipeViewScreen({ importRecipe }: Props = {}) {
   const { id = '' } = useParams();
   const db = useDb();
   const settings = useSettings();
   const recipe = useLiveQuery(async () => (await db.recipes.get(id)) ?? null, [db, id]);
   const [servings, setServings] = useState<number | null>(null);
-  const needsSteps = recipe?.steps === undefined && Boolean(recipe?.sourceUrl);
+  const needsSteps = recipe?.steps === undefined && /^https?:\/\//i.test(recipe?.sourceUrl ?? '');
   useEffect(() => {
     if (needsSteps) void fetchMissingSteps(db, id, importRecipe).catch(() => undefined);
   }, [db, id, needsSteps, importRecipe]);

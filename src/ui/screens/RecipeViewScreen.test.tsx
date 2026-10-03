@@ -98,4 +98,14 @@ describe('RecipeViewScreen', () => {
     await screen.findByText('2 cups flour');
     expect(screen.queryByRole('region', { name: 'Method' })).toBeNull();
   });
+
+  it('shows no status, no fetch and no link for a source that is not a web address', async () => {
+    const { db, id } = await seeded("Grandma's cookbook p.5");
+    const fake = vi.fn();
+    renderRoutes([{ path: '/recipes/:id/view', element: <RecipeViewScreen importRecipe={fake} /> }], `/recipes/${id}/view`, db);
+    await screen.findByText('2 cups flour');
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.queryByRole('link', { name: /View original/ })).toBeNull();
+    expect(fake).not.toHaveBeenCalled();
+  });
 });
